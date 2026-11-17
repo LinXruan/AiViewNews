@@ -4,11 +4,11 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>新闻事件智能解析系统</title>
-  <link rel="stylesheet" href="/static/style.css" />
-  <link rel="stylesheet" href="/static/components.css" />
-  <link rel="stylesheet" href="/static/views.css" />
-  <link rel="stylesheet" href="/static/report.css" />
-  <link rel="stylesheet" href="/static/admin.css" />
+  <link rel="stylesheet" href="/static/style.css?v=13" />
+  <link rel="stylesheet" href="/static/components.css?v=13" />
+  <link rel="stylesheet" href="/static/views.css?v=13" />
+  <link rel="stylesheet" href="/static/report.css?v=13" />
+  <link rel="stylesheet" href="/static/admin.css?v=13" />
 </head>
 <body>
   <div class="shell">
@@ -19,7 +19,15 @@
       </div>
       <div class="account">
         <span id="user-label" class="badge"></span>
-        <button class="btn ghost" id="logout-btn" type="button">退出登录</button>
+        <button class="btn ghost" id="admin-login-toggle" type="button">管理员登录</button>
+        <button class="btn ghost" id="logout-btn" type="button" hidden>退出管理</button>
+        <form id="admin-login-form" class="admin-login" hidden>
+          <strong>管理员登录</strong>
+          <input name="username" placeholder="用户名" autocomplete="username" required />
+          <input name="password" type="password" placeholder="密码" autocomplete="current-password" required />
+          <p class="error" id="admin-login-error" hidden></p>
+          <button class="btn primary small" type="submit">登录</button>
+        </form>
       </div>
     </header>
 
@@ -34,7 +42,9 @@
         <p class="hint">单文件不超过 50MB，解析按队列逐个进行。</p>
         <div id="upload-status" class="upload-status"></div>
         <div class="divider"></div>
-        <h3>已上传文档</h3>
+        <h3 class="side-head">已上传文档
+          <button type="button" class="btn ghost small" id="docs-refresh">刷新</button>
+        </h3>
         <ul id="doc-list" class="doc-list"></ul>
       </aside>
 
@@ -69,7 +79,10 @@
           <div class="card">
             <div class="section-head">
               <h2>分析任务列表</h2>
-              <span class="muted">点击任务可查看时间线与报告</span>
+              <div class="head-tools">
+                <span class="muted">点击任务可查看时间线与报告</span>
+                <button type="button" class="btn ghost small" id="tasks-refresh">刷新</button>
+              </div>
             </div>
             <div class="table-wrap">
               <table class="task-table">
@@ -248,26 +261,10 @@
       </section>
     </main>
 
-    <section class="card auth-card" id="login-view" hidden>
-      <h1>登录</h1>
-      <p class="muted">使用课程演示账号进入系统</p>
-      <form id="login-form" class="stack" novalidate>
-        <label class="field">
-          <span>用户名</span>
-          <input name="username" autocomplete="username" required />
-        </label>
-        <label class="field">
-          <span>密码</span>
-          <input name="password" type="password" autocomplete="current-password" required />
-        </label>
-        <p class="error" id="login-error" hidden></p>
-        <button class="btn primary" type="submit">登录</button>
-      </form>
-    </section>
-
-    <section class="card auth-card" id="setup-view" hidden>
+    <div class="modal-overlay" id="setup-view" hidden>
+      <section class="card auth-card">
       <h1>创建管理员</h1>
-      <p class="muted">首次启动，请创建系统管理员账号。该入口仅在用户表为空且从本机访问时可用。</p>
+      <p class="muted">首次启动，请创建系统管理员账号。该入口仅在还没有管理员且从本机访问时可用。</p>
       <form id="setup-form" class="stack" novalidate>
         <label class="field">
           <span>用户名</span>
@@ -284,15 +281,17 @@
         <p class="error" id="setup-error" hidden></p>
         <button class="btn primary" type="submit">创建并进入</button>
       </form>
-    </section>
+      <button type="button" class="btn ghost" id="setup-close">取消</button>
+      </section>
+    </div>
   </div>
 
-  <script src="/static/app.js"></script>
-  <script src="/static/auth.js"></script>
-  <script src="/static/views/upload.js"></script>
-  <script src="/static/views/tasks.js"></script>
-  <script src="/static/views/timeline.js"></script>
-  <script src="/static/views/report.js"></script>
-  <script src="/static/views/admin.js"></script>
+  <script src="/static/app.js?v=13"></script>
+  <script src="/static/auth.js?v=13"></script>
+  <script src="/static/views/upload.js?v=13"></script>
+  <script src="/static/views/tasks.js?v=13"></script>
+  <script src="/static/views/timeline.js?v=13"></script>
+  <script src="/static/views/report.js?v=13"></script>
+  <script src="/static/views/admin.js?v=13"></script>
 </body>
 </html>

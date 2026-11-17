@@ -15,6 +15,9 @@ App.upload = {
         this.send(files);
       }
     });
+    document.getElementById("docs-refresh").addEventListener("click", () => {
+      App.pollNow();
+    });
   },
 
   makeRow(filename) {
@@ -84,7 +87,7 @@ App.upload = {
           }
         });
         try {
-          await App.refreshDocuments();
+          await App.pollNow();
         } catch (error) {
           /* Listed on the next poll. */
         }

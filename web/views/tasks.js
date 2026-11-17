@@ -9,6 +9,9 @@ App.tasks = {
     }
     this.bound = true;
     document.getElementById("query-submit").addEventListener("click", () => this.submit());
+    document.getElementById("tasks-refresh").addEventListener("click", () => {
+      App.pollNow();
+    });
   },
 
   showError(message) {
@@ -128,7 +131,7 @@ App.tasks = {
         method: "POST",
         body: { query: query, doc_ids: docIds },
       });
-      await App.refreshTasks();
+      await App.pollNow();
       await App.selectTask(task.id, "tasks");
     } catch (error) {
       this.showError(error.message);

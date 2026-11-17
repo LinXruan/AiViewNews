@@ -40,7 +40,7 @@ def login(payload: LoginPayload, request: Request) -> dict:
 @router.post("/logout")
 def logout(request: Request) -> dict:
     request.session.clear()
-    return {"ok": True}
+    return {"ok": True, "user": auth.guest_user()}
 
 
 @router.get("/me")

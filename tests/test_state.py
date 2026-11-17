@@ -48,10 +48,12 @@ def test_restart_resets_interrupted_statuses():
 
 def test_task_creation_rejects_unparsed_document(admin_client):
     conn = get_conn()
+    admin_id = admin_client.get("/api/me").json()["id"]
     with conn:
         cursor = conn.execute(
             "INSERT INTO documents (user_id, filename, stored_path, parse_status, created_at) "
-            "VALUES (1, 'unparsed.pdf', 'x.pdf', 'pending', '2026-11-17T00:00:00+00:00')"
+            "VALUES (?, 'unparsed.pdf', 'x.pdf', 'pending', '2026-11-17T00:00:00+00:00')",
+            (admin_id,),
         )
         doc_id = cursor.lastrowid
     response = admin_client.post(

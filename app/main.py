@@ -38,9 +38,18 @@ app.add_middleware(
     secret_key=config.session_secret(),
     session_cookie="pdfai_session",
     max_age=config.SESSION_MAX_AGE_SECONDS,
+    path="/",
     same_site="lax",
     https_only=False,
 )
+
+
+@app.middleware("http")
+async def no_store_api(request, call_next):
+    response = await call_next(request)
+    if request.url.path.startswith("/api/"):
+        response.headers["Cache-Control"] = "no-store"
+    return response
 register_exception_handlers(app)
 app.include_router(auth_api.router)
 app.include_router(setup_api.router)

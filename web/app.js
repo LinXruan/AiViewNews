@@ -14,19 +14,26 @@ const App = {
     view: "tasks",
     uploading: false,
     taskToken: 0,
+    setupAdminAvailable: false,
   },
+  polling: false,
+  pollTick: 0,
 };
 
 App.api = async function (path, options) {
   const config = Object.assign(
-    { method: "GET", credentials: "same-origin", headers: {} },
+    { method: "GET", credentials: "same-origin", cache: "no-store", headers: {} },
     options || {}
   );
   if (config.body !== undefined) {
     config.headers["Content-Type"] = "application/json";
     config.body = JSON.stringify(config.body);
   }
-  const response = await fetch(path, config);
+  let url = path;
+  if ((config.method || "GET").toUpperCase() === "GET") {
+    url += (url.includes("?") ? "&" : "?") + "_t=" + Date.now();
+  }
+  const response = await fetch(url, config);
   let data = null;
   try {
     data = await response.json();
@@ -40,33 +47,40 @@ App.api = async function (path, options) {
         : "请求失败（" + response.status + "）";
     const failure = new Error(message);
     failure.status = response.status;
-    if (response.status === 401 && App.state.user) {
-      App.state.user = null;
-      App.show("login");
-    }
     throw failure;
   }
   return data;
 };
 
-App.show = function (name) {
-  const login = document.getElementById("login-view");
-  const setup = document.getElementById("setup-view");
-  const main = document.getElementById("app-main");
-  const topbar = document.getElementById("topbar");
-  const loggedIn = name === "app";
-  login.hidden = name !== "login";
-  setup.hidden = name !== "setup";
-  main.hidden = !loggedIn;
-  topbar.hidden = !loggedIn;
+App.show = function () {
+  document.getElementById("topbar").hidden = false;
+  document.getElementById("app-main").hidden = false;
+};
+
+App.updateAccountUi = function () {
+  const user = App.state.user;
+  if (!user) {
+    return;
+  }
+  const isAdmin = user.role === "admin";
+  const isGuest = user.username === "guest";
+  document.getElementById("user-label").textContent = isAdmin
+    ? user.username + " · 管理员"
+    : isGuest
+      ? "普通用户（免登录）"
+      : user.username + " · 普通用户";
+  document.getElementById("admin-tab").hidden = !isAdmin;
+  document.getElementById("admin-login-toggle").hidden = isAdmin;
+  document.getElementById("admin-login-toggle").textContent = App.state.setupAdminAvailable
+    ? "创建管理员"
+    : "管理员登录";
+  document.getElementById("logout-btn").hidden = !isAdmin;
 };
 
 App.setUser = function (user) {
   App.state.user = user;
-  document.getElementById("user-label").textContent =
-    user.username + " · " + (user.role === "admin" ? "管理员" : "普通用户");
-  document.getElementById("admin-tab").hidden = user.role !== "admin";
-  App.show("app");
+  App.updateAccountUi();
+  App.show();
 };
 
 App.formatTime = function (value) {
@@ -128,7 +142,18 @@ App.confirmDiscardReport = function () {
   return true;
 };
 
+App.resetTaskState = function () {
+  App.state.taskToken += 1;
+  App.state.currentTaskId = null;
+  App.state.currentTask = null;
+  App.state.events = [];
+  App.state.report = null;
+};
+
 App.switchView = function (name) {
+  if (name === "admin" && (!App.state.user || App.state.user.role !== "admin")) {
+    return;
+  }
   if (!App.confirmDiscardReport()) {
     return;
   }
@@ -195,9 +220,7 @@ App.selectTask = async function (taskId, view) {
 
 App.updateContext = function () {
   const task = App.state.currentTask;
-  const text = task
-    ? "任务 #" + task.id + " · " + task.query
-    : "未选择任务";
+  const text = task ? "任务 #" + task.id + " · " + task.query : "未选择任务";
   document.getElementById("task-context").textContent = text;
   document.getElementById("timeline-task-label").textContent = task ? "任务 #" + task.id : "";
 };
@@ -223,56 +246,41 @@ App.reloadCurrentTask = async function () {
   }
 };
 
+App.poll = async function () {
+  const requests = [];
+  const parsing = App.state.documents.some((doc) =>
+    ["pending", "parsing"].includes(doc.parse_status)
+  );
+  App.pollTick += 1;
+  if (parsing || App.pollTick % 4 === 1) {
+    requests.push(App.refreshDocuments());
+  }
+  const active = App.state.tasks.some((task) =>
+    ["pending", "analyzing"].includes(task.status)
+  );
+  if (App.state.view === "tasks" || active) {
+    requests.push(App.refreshTasks());
+  }
+  if (App.state.currentTask && ["pending", "analyzing"].includes(App.state.currentTask.status)) {
+    requests.push(App.reloadCurrentTask());
+  }
+  await Promise.allSettled(requests);
+};
+
+App.pollNow = App.poll;
+
 App.startPolling = function () {
   if (App.polling) {
     return;
   }
   App.polling = true;
-  window.setInterval(async () => {
+  window.setInterval(() => {
     if (document.hidden || !App.state.user) {
       return;
     }
-    try {
-      const parsing = App.state.documents.some((doc) =>
-        ["pending", "parsing"].includes(doc.parse_status)
-      );
-      const active = App.state.tasks.some((task) =>
-        ["pending", "analyzing"].includes(task.status)
-      );
-      if (parsing) {
-        await App.refreshDocuments();
-      }
-      if (active || App.state.view === "tasks") {
-        await App.refreshTasks();
-      }
-      if (App.state.currentTask && ["pending", "analyzing"].includes(App.state.currentTask.status)) {
-        await App.reloadCurrentTask();
-      }
-    } catch (error) {
-      /* Transient polling errors are ignored; the next tick retries. */
-    }
-  }, 1500);
-};
-
-App.boot = async function () {
-  App.bindAuth();
-  try {
-    const setup = await App.api("/api/setup/admin");
-    if (setup.available) {
-      App.show("setup");
-      return;
-    }
-  } catch (error) {
-    /* Fall back to login; the form will report connectivity errors. */
-  }
-  try {
-    const user = await App.api("/api/me");
-    App.setUser(user);
-    await App.startSession();
-  } catch (error) {
-    App.show("login");
-  }
+    App.poll();
+  }, 1200);
 };
 
 window.App = App;
-window.addEventListener("DOMContentLoaded", App.boot);
+window.addEventListener("DOMContentLoaded", () => App.boot());

@@ -14,6 +14,7 @@ from ..db import get_conn
 from ..errors import ApiError
 
 PBKDF2_ITERATIONS = 100_000
+GUEST_USERNAME = "guest"
 USERNAME_MIN = 3
 USERNAME_MAX = 32
 PASSWORD_MIN = 6
@@ -79,6 +80,20 @@ def user_count() -> int:
     return get_conn().execute("SELECT COUNT(*) FROM users").fetchone()[0]
 
 
+def guest_user() -> dict:
+    """Shared anonymous identity. It has a random, unusable password."""
+    row = get_user_by_username(GUEST_USERNAME)
+    if row is not None:
+        return public_user(row)
+    try:
+        return create_user(GUEST_USERNAME, secrets.token_hex(24), role="user")
+    except ApiError:
+        row = get_user_by_username(GUEST_USERNAME)
+        if row is None:
+            raise
+        return public_user(row)
+
+
 def admin_count() -> int:
     return get_conn().execute(
         "SELECT COUNT(*) FROM users WHERE role = 'admin'"
@@ -135,7 +150,8 @@ def create_first_admin(username: str, password: str) -> dict:
 
 
 def seed_initial_users() -> None:
-    """Seed from .env. The packaged build has no .env and uses /setup instead."""
+    """Seed guest first; admin/demo come from .env when present."""
+    guest_user()
     username = config.admin_username()
     password = config.admin_password()
     if username and password and get_user_by_username(username) is None:
@@ -147,13 +163,17 @@ def seed_initial_users() -> None:
 
 
 def current_user(request: Request) -> dict:
+    """No login wall: missing or stale sessions fall back to the guest user."""
     user_id = request.session.get("uid")
     if not isinstance(user_id, int):
-        raise HTTPException(status_code=401, detail="请先登录")
+        guest = guest_user()
+        request.session["uid"] = guest["id"]
+        return guest
     row = get_user_by_id(user_id)
     if row is None:
-        request.session.clear()
-        raise HTTPException(status_code=401, detail="登录已失效，请重新登录")
+        guest = guest_user()
+        request.session["uid"] = guest["id"]
+        return guest
     return public_user(row)
 
 
