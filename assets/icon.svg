@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="400" height="120" viewBox="0 0 400 120" role="img" aria-label="AiViewNews">
+  <title>AiViewNews</title>
+  <rect x="2" y="2" width="396" height="116" rx="18" fill="#ffffff" stroke="#e3e7ee" stroke-width="2" />
+  <text x="200" y="76" text-anchor="middle"
+        font-family="Segoe UI, Microsoft YaHei, Helvetica Neue, Arial, system-ui, sans-serif"
+        font-size="48" font-weight="700" letter-spacing="1">
+    <tspan fill="#2563eb">A</tspan><tspan fill="#1f2937">iViewNews</tspan>
+  </text>
+</svg>
