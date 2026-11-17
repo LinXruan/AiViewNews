@@ -1,0 +1,19 @@
+{
+  "python.defaultInterpreterPath": "D:\\Install\\anaconda3\\envs\\deepseek\\python.exe",
+  "python.terminal.activateEnvironment": false,
+  "terminal.integrated.defaultProfile.windows": "PowerShell (deepseek)",
+  "terminal.integrated.profiles.windows": {
+    "PowerShell (deepseek)": {
+      "path": "C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\powershell.exe",
+      "args": [
+        "-NoLogo",
+        "-NoExit",
+        "-ExecutionPolicy",
+        "Bypass",
+        "-Command",
+        "& 'D:/Install/anaconda3/shell/condabin/conda-hook.ps1'; conda activate deepseek"
+      ],
+      "icon": "terminal-powershell"
+    }
+  }
+}
