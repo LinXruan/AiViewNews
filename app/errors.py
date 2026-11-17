@@ -1,0 +1,49 @@
+"""Uniform error envelope: {"error": {"code": "...", "message": "..."}}."""
+from __future__ import annotations
+
+from fastapi import FastAPI, Request
+from fastapi.exceptions import RequestValidationError
+from fastapi.responses import JSONResponse
+from starlette.exceptions import HTTPException as StarletteHTTPException
+
+_STATUS_CODES = {
+    400: "bad_request",
+    401: "unauthorized",
+    403: "forbidden",
+    404: "not_found",
+    405: "method_not_allowed",
+    409: "conflict",
+    422: "invalid_payload",
+    500: "internal_error",
+}
+
+
+class ApiError(Exception):
+    def __init__(self, status_code: int, code: str, message: str) -> None:
+        super().__init__(message)
+        self.status_code = status_code
+        self.code = code
+        self.message = message
+
+
+def _payload(code: str, message: str) -> dict:
+    return {"error": {"code": code, "message": message}}
+
+
+def register_exception_handlers(app: FastAPI) -> None:
+    @app.exception_handler(ApiError)
+    async def _api_error(_: Request, exc: ApiError) -> JSONResponse:
+        return JSONResponse(status_code=exc.status_code, content=_payload(exc.code, exc.message))
+
+    @app.exception_handler(StarletteHTTPException)
+    async def _http_error(_: Request, exc: StarletteHTTPException) -> JSONResponse:
+        code = _STATUS_CODES.get(exc.status_code, "http_error")
+        message = exc.detail if isinstance(exc.detail, str) else "请求失败"
+        return JSONResponse(status_code=exc.status_code, content=_payload(code, message))
+
+    @app.exception_handler(RequestValidationError)
+    async def _validation_error(_: Request, __: RequestValidationError) -> JSONResponse:
+        return JSONResponse(
+            status_code=422,
+            content=_payload("invalid_payload", "请求参数不合法"),
+        )

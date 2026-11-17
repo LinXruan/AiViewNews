@@ -97,7 +97,10 @@ tasks:     pending -> analyzing -> done | partial | failed
 | GET | /api/admin/tasks | 管理员：全量任务 |
 | GET/PUT | /api/admin/settings | 运行时配置读写（key 只写不读，见 PLAN_12） |
 | POST | /api/admin/settings/test-llm · test-parse | 连通性测试 |
+| GET | /api/admin/settings/detect-mineru | 扫描 PATH 与 conda 环境中的 mineru |
+| GET | /api/admin/tasks/{id} | 管理员只读查看单个任务、事件与报告 |
 | GET | /api/setup/status | 引导状态（三个布尔值） |
+| GET/POST | /api/setup/admin | 首个管理员的状态查询与创建（仅本机、仅 `users` 表为空时，见 PLAN_3） |
 
 两条约定：
 

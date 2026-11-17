@@ -1,0 +1,271 @@
+.query-input {
+  width: 100%;
+  min-height: 84px;
+  resize: vertical;
+}
+
+.doc-picker {
+  margin-top: 14px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 16px;
+}
+
+.doc-picker label {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  color: var(--muted);
+  cursor: pointer;
+}
+
+.doc-picker .no-doc {
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.query-actions {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-top: 16px;
+  min-height: 42px;
+}
+
+.table-wrap {
+  overflow-x: auto;
+}
+
+.task-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13.5px;
+}
+
+.task-table th,
+.task-table td {
+  padding: 10px 10px;
+  border-bottom: 1px solid var(--line);
+  text-align: left;
+  vertical-align: top;
+}
+
+.task-table th {
+  color: var(--muted);
+  font-weight: 600;
+  font-size: 12.5px;
+  white-space: nowrap;
+}
+
+.task-table tbody tr {
+  cursor: pointer;
+}
+
+.task-table tbody tr:hover {
+  background: #f7faff;
+}
+
+.task-table .query-cell {
+  max-width: 190px;
+  font-weight: 600;
+}
+
+.task-table .titles-cell {
+  max-width: 240px;
+  color: var(--muted);
+}
+
+.task-table .time-cell {
+  white-space: nowrap;
+  color: var(--muted);
+}
+
+.task-table .num-cell {
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+}
+
+.task-table .row-action {
+  padding: 5px 10px;
+  font-size: 12px;
+}
+
+.summary {
+  margin: 0 0 22px;
+  padding: 14px 16px;
+  border-left: 3px solid var(--accent);
+  border-radius: 0 9px 9px 0;
+  background: #f5f8ff;
+  color: #344054;
+}
+
+.timeline-track {
+  display: flex;
+  align-items: flex-start;
+  gap: 0;
+  overflow-x: auto;
+  padding: 10px 4px 20px;
+}
+
+.timeline-track:empty {
+  display: none;
+}
+
+.timeline-node {
+  position: relative;
+  flex: 0 0 190px;
+  padding: 30px 12px 0;
+  border: 0;
+  border-top: 2px solid var(--line);
+  background: transparent;
+  text-align: left;
+  font: inherit;
+  cursor: pointer;
+  color: var(--ink);
+}
+
+.timeline-node::before {
+  content: "";
+  position: absolute;
+  top: -7px;
+  left: 14px;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: var(--accent);
+  border: 2px solid #fff;
+  box-shadow: 0 0 0 2px #cfe0ff;
+  transition: transform 0.15s;
+}
+
+.timeline-node:hover::before {
+  transform: scale(1.25);
+}
+
+.timeline-node.active::before {
+  background: var(--green);
+  box-shadow: 0 0 0 2px #c6f0e0;
+}
+
+.timeline-node .node-date {
+  display: block;
+  color: var(--accent-dark);
+  font-size: 12.5px;
+  font-weight: 700;
+  margin-bottom: 3px;
+}
+
+.timeline-node .node-title {
+  display: block;
+  font-size: 13px;
+  line-height: 1.45;
+  color: #344054;
+}
+
+.timeline-undated {
+  margin-top: 10px;
+  padding-top: 14px;
+  border-top: 1px dashed var(--line);
+}
+
+.timeline-undated h3 {
+  margin: 0 0 10px;
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.detail-card {
+  animation: slide-in 0.18s ease-out;
+}
+
+@keyframes slide-in {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: none; }
+}
+
+.detail-time {
+  margin: 0 0 6px;
+  color: var(--accent-dark);
+  font-weight: 700;
+}
+
+.detail-text {
+  margin: 0 0 16px;
+  font-size: 17px;
+  line-height: 1.6;
+}
+
+.detail-meta {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+  margin: 0 0 16px;
+}
+
+.detail-meta div {
+  padding: 10px 12px;
+  border-radius: 9px;
+  background: #f8fafd;
+}
+
+.detail-meta dt {
+  color: var(--muted);
+  font-size: 12px;
+  margin-bottom: 2px;
+}
+
+.detail-meta dd {
+  margin: 0;
+  font-size: 13.5px;
+  word-break: break-word;
+}
+
+.source-view {
+  margin-top: 14px;
+  padding: 14px;
+  border: 1px solid var(--line);
+  border-radius: 9px;
+  background: #fbfcfe;
+  max-height: 320px;
+  overflow: auto;
+  white-space: pre-wrap;
+  word-break: break-word;
+  font-size: 13.5px;
+  line-height: 1.7;
+}
+
+.source-view mark {
+  background: #ffe58a;
+  padding: 1px 2px;
+  border-radius: 3px;
+}
+
+@media (max-width: 640px) {
+  .detail-meta {
+    grid-template-columns: 1fr;
+  }
+
+  .task-table .titles-cell {
+    display: none;
+  }
+
+  .timeline-track {
+    flex-direction: column;
+    overflow-x: visible;
+    padding-left: 8px;
+  }
+
+  .timeline-node {
+    flex: none;
+    width: 100%;
+    border-top: 0;
+    border-left: 2px solid var(--line);
+    padding: 6px 8px 18px 24px;
+  }
+
+  .timeline-node::before {
+    top: 9px;
+    left: -7px;
+  }
+}

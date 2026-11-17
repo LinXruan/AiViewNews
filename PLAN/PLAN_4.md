@@ -1,6 +1,6 @@
 # PLAN 4 — 文档上传与 mineru 解析
 
-日期：2026-11-17　｜　阶段：M1
+日期：2026-11-17　｜　阶段：M1　｜　状态：已实现（mineru 4.2.3 / flash 档）
 
 ## 1. 需求
 
@@ -18,6 +18,15 @@
 - 启动时把所有 `parsing` 重置为 `pending` 重新入队（进程被杀不留僵尸状态）。
 
 **风险与取舍**：mineru 的具体调用方式以任务书附录示例为准，版本差异只影响 `parser.py` 一个文件；不在业务代码里直接引用 mineru 的 Python API，统一走 CLI 子进程，便于换版本和隔离环境。
+
+## 2.1 实现时的现实偏差（2026-11-17）
+
+- 本机可用内存约 3.9GB，装不下 basic/standard 模型；实际使用 **mineru 4.2.3 的 flash 档**（纯文本，仍由 mineru 解析）：
+  `mineru parse <pdf> --pages all --tier flash -o - --wait 600`。
+- mineru 4.x 需要本地 doclib 服务，parser 在解析前执行 `mineru server status`，未运行则 `mineru server start`。
+- flash 档不产出图片；`images/` 目录与 assets 接口保留，安装完整模型后无需改业务代码。
+- 页码区间直接使用 mineru 输出的 `<!-- page N of M -->` 标记切分，比按 pymupdf 文本反查更可靠；缺失页在末尾补空区间，保证 `page_offsets` 长度等于页数。
+- 设置项在 PLAN_12 落地前只读 `.env`，接口签名不变。
 
 ## 3. 文件
 

@@ -1,6 +1,6 @@
 # PLAN 12 — 运行时配置：管理员设置页与首次引导
 
-日期：2026-11-17　｜　阶段：M0–M5（骨架期先建表与读取层，页面在管理端补齐）
+日期：2026-11-17　｜　阶段：M0–M5（骨架期先建表与读取层，页面在管理端补齐）　｜　状态：已实现（配置分层、掩码、测试连接、探测）
 
 ## 1. 需求
 
@@ -80,6 +80,13 @@ settings(key TEXT PRIMARY KEY, value TEXT, updated_at TEXT, updated_by INTEGER)
 5. `PUT` 时把 `api_key` 传空字符串 → 原 key 保留；传 `null` → 清空并触发引导。
 6. 普通用户 `PUT /api/admin/settings` → 403。
 7. 检查 `llm.jsonl` → 无任何 key 片段。
+
+## 8.1 实现偏差
+
+- mineru 4.x 没有 backend/device/model_dir 参数，设置项收敛为 `parse.mineru_cmd` 与 `parse.tier`（flash/basic/standard/advanced）。
+- `test-parse` 返回 mineru 版本与本地服务状态，不再跑完整样例解析；完整解析已由 `scripts/warmup.py` 覆盖。
+- 首次引导未做独立三步向导，改为登录后顶部提示条 + 管理页「系统设置」；管理员保存后立即生效并写入 `ui.first_run_done`。
+- 读取顺序与缓存按本计划执行：`settings` 表 > 环境变量 > 默认值，进程内 1 秒缓存。
 
 ## 9. 回退
 
