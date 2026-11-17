@@ -77,6 +77,9 @@ App.showAuth = function () {
   document.getElementById("auth-screen").hidden = false;
   document.getElementById("workspace").hidden = true;
   document.getElementById("report-screen").hidden = true;
+  document.getElementById("admin-screen").hidden = true;
+  document.getElementById("settings-panel").hidden = true;
+  document.getElementById("account-menu").hidden = true;
   const error = document.getElementById("auth-error");
   error.hidden = true;
   if (App.auth) {
@@ -97,8 +100,12 @@ App.setUser = function (user) {
   App.state.user = user;
   const guest = user.username === "guest";
   document.getElementById("account-name").textContent = guest ? "不登陆" : user.username;
-  document.getElementById("avatar").textContent = (guest ? "不" : user.username[0] || "A").toUpperCase();
-  document.getElementById("account-settings").hidden = guest;
+  const avatar = document.getElementById("avatar");
+  avatar.textContent = guest ? "" : (user.username[0] || "A").toUpperCase();
+  avatar.classList.toggle("guest", guest);
+  avatar.style.background = guest ? "" : (user.avatar_color || "");
+  document.getElementById("settings-console").hidden = user.role !== "admin";
+  document.getElementById("account-settings").hidden = false;
 };
 
 App.formatTime = function (value) {
@@ -156,6 +163,7 @@ App.startSession = async function () {
   App.reader.bind();
   App.report.bind();
   App.account.bind();
+  App.admin.bind();
   App.state.activeHistory = null;
   App.state.activeTask = null;
   App.state.events = [];

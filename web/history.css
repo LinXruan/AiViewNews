@@ -115,7 +115,7 @@
 
 .account-box {
   position: relative;
-  margin-top: 10px;
+  margin-top: auto;
   padding-top: 10px;
   border-top: 1px solid var(--line);
 }
@@ -148,18 +148,23 @@
   font-weight: 700;
 }
 
+.avatar.guest {
+  background: #fff;
+  border: 1px solid #d5dbe5;
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.6);
+}
+
 .account-name {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
-.account-menu {
-  position: absolute;
-  left: 6px;
-  right: 6px;
-  bottom: calc(100% + 4px);
-  z-index: 30;
+.account-menu,
+.settings-panel {
+  position: fixed;
+  z-index: 80;
+  min-width: 176px;
   padding: 5px;
   border: 1px solid var(--line);
   border-radius: 10px;
@@ -167,6 +172,7 @@
   box-shadow: var(--shadow);
 }
 
+.settings-panel button,
 .account-menu button {
   display: block;
   width: 100%;
@@ -174,9 +180,11 @@
   border: 0;
   border-radius: 7px;
   background: transparent;
+  color: var(--ink);
   text-align: left;
 }
 
+.settings-panel button:hover,
 .account-menu button:hover {
   background: #f2f4f8;
 }

@@ -56,7 +56,7 @@ def _admin_count() -> int:
 @router.get("/users")
 def list_users(_: dict = Depends(require_admin)) -> dict:
     rows = get_conn().execute(
-        "SELECT u.id, u.username, u.role, u.created_at, "
+        "SELECT u.id, u.username, u.role, u.avatar_color, u.created_at, "
         "(SELECT COUNT(*) FROM documents d WHERE d.user_id = u.id) AS doc_count, "
         "(SELECT COUNT(*) FROM tasks t WHERE t.user_id = u.id) AS task_count, "
         "(SELECT MAX(t.created_at) FROM tasks t WHERE t.user_id = u.id) AS last_active "

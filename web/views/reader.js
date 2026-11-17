@@ -17,6 +17,26 @@ App.reader = {
     document.getElementById("summary-close").addEventListener("click", () => {
       this.clearSelection();
     });
+    this.bindResize();
+  },
+
+  bindResize() {
+    const panel = document.getElementById("summary-panel");
+    const handle = document.getElementById("summary-resize");
+    handle.addEventListener("pointerdown", (event) => {
+      const startY = event.clientY;
+      const startHeight = panel.offsetHeight;
+      const move = (e) => {
+        const h = Math.min(window.innerHeight * 0.6, Math.max(120, startHeight - (e.clientY - startY)));
+        panel.style.height = h + "px";
+      };
+      const up = () => {
+        window.removeEventListener("pointermove", move);
+        window.removeEventListener("pointerup", up);
+      };
+      window.addEventListener("pointermove", move);
+      window.addEventListener("pointerup", up);
+    });
   },
 
   showUpload() {
@@ -57,8 +77,9 @@ App.reader = {
     const tabs = document.getElementById("doc-tabs");
     tabs.textContent = "";
     docs.forEach((doc) => {
-      const button = App.el("button", "doc-tab", doc.filename);
+      const button = App.el("button", "doc-tab", (doc.filename || "").replace(/\.pdf$/i, ""));
       button.type = "button";
+      button.title = doc.filename || "";
       if (doc.id === App.state.activeDocId) {
         button.classList.add("active");
       }
@@ -268,11 +289,7 @@ App.reader = {
     const body = document.getElementById("summary-body");
     title.textContent = event.event_time || "时间不详";
     body.textContent = "";
-    body.append(
-      App.el("p", "summary-text", event.event_text),
-      App.el("p", "summary-meta", "来源：" + (event.filename || "—") + " · 第 " + (event.page || "—") + " 页"),
-      App.el("p", "summary-meta", "原文：" + (event.source_quote || "—"))
-    );
+    body.append(App.el("p", "summary-text", event.event_text));
     panel.hidden = false;
   },
 };

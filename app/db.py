@@ -9,7 +9,7 @@ from . import paths
 
 _local = threading.local()
 
-SCHEMA_VERSION = 1
+SCHEMA_VERSION = 2
 _LEGACY_TABLES = (
     "events",
     "reports",
@@ -54,6 +54,24 @@ def _clear_legacy_data(conn: sqlite3.Connection) -> None:
     (paths.LOG_DIR / "llm.jsonl").unlink(missing_ok=True)
 
 
+def _add_avatar_color(conn: sqlite3.Connection) -> None:
+    """PLAN 15: give every existing user a dark avatar color."""
+    columns = {row["name"] for row in conn.execute("PRAGMA table_info(users)")}
+    if "avatar_color" in columns:
+        return
+    conn.execute(
+        "ALTER TABLE users ADD COLUMN avatar_color TEXT NOT NULL DEFAULT '#2563eb'"
+    )
+    from .services.auth import random_avatar_color
+
+    rows = conn.execute("SELECT id FROM users").fetchall()
+    for row in rows:
+        conn.execute(
+            "UPDATE users SET avatar_color = ? WHERE id = ?",
+            (random_avatar_color(), row["id"]),
+        )
+
+
 def init_db() -> None:
     """Apply the schema, resetting legacy data once when the model changes."""
     paths.ensure_dirs()
@@ -64,9 +82,11 @@ def init_db() -> None:
     if version < SCHEMA_VERSION:
         _clear_legacy_data(conn)
         conn.executescript(paths.SCHEMA_PATH.read_text(encoding="utf-8"))
+        _add_avatar_color(conn)
         conn.execute("PRAGMA user_version = " + str(SCHEMA_VERSION))
     else:
         conn.executescript(paths.SCHEMA_PATH.read_text(encoding="utf-8"))
+        _add_avatar_color(conn)
     conn.commit()
 
 

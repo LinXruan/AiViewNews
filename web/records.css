@@ -17,6 +17,24 @@
   padding-right: 6px;
 }
 
+.record-rail .rail-head-end {
+  justify-content: flex-end;
+}
+
+.record-rail.collapsed .rail-head {
+  justify-content: center;
+}
+
+#records-toggle {
+  display: grid;
+  place-items: center;
+  padding: 0;
+}
+
+#records-toggle svg {
+  display: block;
+}
+
 .record-rail.collapsed #records-toggle,
 .record-rail.collapsed .record-list,
 .record-rail.collapsed .query-form,

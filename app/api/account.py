@@ -35,6 +35,15 @@ def change_password(
     return {"ok": True}
 
 
+@router.delete("/guest-data")
+def discard_guest_data(request: Request, user: dict = Depends(require_user)) -> dict:
+    if user["username"] != auth.GUEST_USERNAME:
+        raise ApiError(400, "not_guest", "仅不登陆模式可清理")
+    histories.delete_all_for_user(user["id"])
+    request.session.clear()
+    return {"ok": True}
+
+
 @router.delete("")
 def delete_account(request: Request, user: dict = Depends(require_user)) -> dict:
     if user["username"] == auth.GUEST_USERNAME:

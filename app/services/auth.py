@@ -19,9 +19,29 @@ USERNAME_MIN = 3
 USERNAME_MAX = 32
 PASSWORD_MIN = 6
 
+# Dark shades so the white initial stays readable. No pale/pastel values.
+AVATAR_COLORS = (
+    "#1d4ed8",
+    "#0f766e",
+    "#b91c1c",
+    "#7c3aed",
+    "#be123c",
+    "#0369a1",
+    "#4d7c0f",
+    "#a16207",
+    "#4338ca",
+    "#155e75",
+    "#9a3412",
+    "#86198f",
+)
+
 
 def _now() -> str:
     return datetime.now(timezone.utc).isoformat(timespec="seconds")
+
+
+def random_avatar_color() -> str:
+    return secrets.choice(AVATAR_COLORS)
 
 
 def hash_password(password: str) -> str:
@@ -58,19 +78,24 @@ def _validated(username: str, password: str) -> tuple[str, str]:
 
 
 def public_user(row: dict) -> dict:
-    return {"id": row["id"], "username": row["username"], "role": row["role"]}
+    return {
+        "id": row["id"],
+        "username": row["username"],
+        "role": row["role"],
+        "avatar_color": row["avatar_color"],
+    }
 
 
 def get_user_by_id(user_id: int) -> dict | None:
     row = get_conn().execute(
-        "SELECT id, username, role FROM users WHERE id = ?", (user_id,)
+        "SELECT id, username, role, avatar_color FROM users WHERE id = ?", (user_id,)
     ).fetchone()
     return dict(row) if row else None
 
 
 def get_user_by_username(username: str) -> dict | None:
     row = get_conn().execute(
-        "SELECT id, username, role, password_hash FROM users WHERE username = ?",
+        "SELECT id, username, role, avatar_color, password_hash FROM users WHERE username = ?",
         (username,),
     ).fetchone()
     return dict(row) if row else None
@@ -104,16 +129,22 @@ def create_user(username: str, password: str, role: str = "user") -> dict:
     username, password = _validated(username, password)
     conn = get_conn()
     try:
+        color = random_avatar_color()
         cursor = conn.execute(
-            "INSERT INTO users (username, password_hash, role, created_at) "
-            "VALUES (?, ?, ?, ?)",
-            (username, hash_password(password), role, _now()),
+            "INSERT INTO users (username, password_hash, role, avatar_color, created_at) "
+            "VALUES (?, ?, ?, ?, ?)",
+            (username, hash_password(password), role, color, _now()),
         )
         conn.commit()
     except sqlite3.IntegrityError as exc:
         conn.rollback()
         raise ApiError(409, "username_taken", "用户名已存在") from exc
-    return {"id": cursor.lastrowid, "username": username, "role": role}
+    return {
+        "id": cursor.lastrowid,
+        "username": username,
+        "role": role,
+        "avatar_color": color,
+    }
 
 
 def authenticate(username: str, password: str) -> dict | None:
@@ -131,10 +162,11 @@ def create_first_admin(username: str, password: str) -> dict:
     try:
         if conn.execute("SELECT 1 FROM users WHERE role = 'admin' LIMIT 1").fetchone():
             raise ApiError(403, "setup_closed", "管理员已创建，请直接登录")
+        color = random_avatar_color()
         cursor = conn.execute(
-            "INSERT INTO users (username, password_hash, role, created_at) "
-            "VALUES (?, ?, 'admin', ?)",
-            (username, hash_password(password), _now()),
+            "INSERT INTO users (username, password_hash, role, avatar_color, created_at) "
+            "VALUES (?, ?, 'admin', ?, ?)",
+            (username, hash_password(password), color, _now()),
         )
         conn.commit()
     except ApiError:
@@ -146,7 +178,12 @@ def create_first_admin(username: str, password: str) -> dict:
     except Exception:
         conn.rollback()
         raise
-    return {"id": cursor.lastrowid, "username": username, "role": "admin"}
+    return {
+        "id": cursor.lastrowid,
+        "username": username,
+        "role": "admin",
+        "avatar_color": color,
+    }
 
 
 def seed_initial_users() -> None:

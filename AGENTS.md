@@ -26,6 +26,7 @@
 ```bash
 python -m pip install -r requirements.txt      # 装依赖（PyPI 直连不可用时加清华镜像）
 python -m uvicorn app.main:app --reload       # 起服务，浏览器开 http://127.0.0.1:8000
+tools\start.bat                              # Windows 一键启动并打开浏览器
 python scripts/warmup.py                      # 演示前预热：配置/数据库/内存/mineru/模型
 python -m pytest                              # 跑测试
 ```
