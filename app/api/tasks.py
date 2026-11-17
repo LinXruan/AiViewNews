@@ -10,7 +10,7 @@ from pydantic import BaseModel, Field
 from .. import workers
 from ..db import get_conn
 from ..errors import ApiError
-from ..services import documents
+from ..services import documents, histories
 from ..services.auth import require_user
 
 router = APIRouter(prefix="/api/tasks", tags=["tasks"])
@@ -21,13 +21,14 @@ def _now() -> str:
 
 
 class CreateTaskPayload(BaseModel):
-    doc_ids: list[int] = Field(min_length=1, max_length=10)
+    history_id: int
     query: str = Field(min_length=1, max_length=500)
 
 
 def _public_task(row: dict) -> dict:
     return {
         "id": row["id"],
+        "history_id": row["history_id"],
         "query": row["query"],
         "status": row["status"],
         "timeline_summary": row["timeline_summary"],
@@ -72,21 +73,25 @@ def create_task(payload: CreateTaskPayload, user: dict = Depends(require_user)) 
     query = payload.query.strip()
     if not query:
         raise ApiError(400, "empty_query", "查询内容不能为空")
-    doc_ids = list(dict.fromkeys(payload.doc_ids))
-    docs = []
-    for doc_id in doc_ids:
-        doc = documents.get_document(doc_id, user["id"])
-        if doc is None:
-            raise ApiError(404, "document_not_found", "文档不存在或无权访问")
-        if doc["parse_status"] != "parsed":
-            raise ApiError(409, "document_not_ready", "文档尚未解析完成：" + doc["filename"])
-        docs.append(doc)
+    history = histories.get_raw(payload.history_id, user["id"])
+    if history is None:
+        raise ApiError(404, "history_not_found", "历史记录不存在")
+    if history["status"] == "draft":
+        raise ApiError(409, "history_not_ready", "PDF 仍在解析，请稍后再试")
+    docs = [
+        doc
+        for doc in documents.list_documents(user["id"], payload.history_id)
+        if doc["parse_status"] == "parsed"
+    ]
+    if not docs:
+        raise ApiError(409, "no_parsed_document", "该历史下没有已解析的 PDF")
 
     conn = get_conn()
     try:
         cursor = conn.execute(
-            "INSERT INTO tasks (user_id, query, status, created_at) VALUES (?, ?, 'pending', ?)",
-            (user["id"], query, _now()),
+            "INSERT INTO tasks (user_id, history_id, query, status, created_at) "
+            "VALUES (?, ?, ?, 'pending', ?)",
+            (user["id"], payload.history_id, query, _now()),
         )
         task_id = cursor.lastrowid
         conn.executemany(
@@ -97,18 +102,26 @@ def create_task(payload: CreateTaskPayload, user: dict = Depends(require_user)) 
     except Exception:
         conn.rollback()
         raise
+    histories.touch(payload.history_id)
     workers.enqueue_analysis(task_id)
     return _task_detail(_owned_task(task_id, user["id"]))
 
 
 @router.get("")
-def list_tasks(user: dict = Depends(require_user)) -> dict:
+def list_tasks(
+    history_id: int | None = None, user: dict = Depends(require_user)
+) -> dict:
     conn = get_conn()
-    rows = conn.execute(
+    sql = (
         "SELECT t.*, (SELECT COUNT(*) FROM events e WHERE e.task_id = t.id) AS event_count "
-        "FROM tasks t WHERE t.user_id = ? ORDER BY t.id DESC LIMIT 50",
-        (user["id"],),
-    ).fetchall()
+        "FROM tasks t WHERE t.user_id = ?"
+    )
+    params: list = [user["id"]]
+    if history_id is not None:
+        sql += " AND t.history_id = ?"
+        params.append(history_id)
+    sql += " ORDER BY t.id DESC LIMIT 100"
+    rows = conn.execute(sql, params).fetchall()
     tasks = []
     for row in rows:
         task = _public_task(dict(row))

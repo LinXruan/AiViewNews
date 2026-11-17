@@ -2,14 +2,14 @@
 
 ## 0. Agent 守则
 
-- 改动前先读本文件、[REQUIREMENT.md](REQUIREMENT.md)、[PLAN.md](PLAN.md) 与最近一份 `PLAN/PLAN_<n>.md`。
-- 非平凡改动先写 `PLAN/PLAN_<n>.md`：需求、方案、文件清单、验证、回退。序号递增，不复用。
+- 改动前先读本文件、[REQUIREMENT.md](REQUIREMENT.md) 与最近一份 PLAN（当前在 `PLAN/PLAN_11~20/PLAN_<n>.md`；1–10 归档在 `PLAN/PLAN_1~10/`）。
+- 非平凡改动先写 `PLAN/PLAN_11~20/PLAN_<n>.md`：需求、方案、文件清单、验证、回退。序号递增，不复用；每 10 个计划一个目录。
 - 阻塞或语义不确定时停下来问用户，不要猜；也不要顺手做没被要求的功能。
 - 完成标准是可运行且对应场景验证通过，不是"代码写完"。
 
 ## 1. 项目概况
 
-- **作业**：新闻事件智能解析系统（见 REQUIREMENT.md）。题目硬性要求 B/S 架构，前端必须是浏览器。
+- **项目名**：AiViewNews；作业名仍是“新闻事件智能解析系统”（见 REQUIREMENT.md）。题目硬性要求 B/S 架构，前端必须是浏览器。
 - **需求唯一来源**：REQUIREMENT.md。PPT 与本文件冲突时以 REQUIREMENT.md 为准；创新点不算需求。
 - 项目当前状态以目录与 git 为准，本文件不复述架构细节。
 

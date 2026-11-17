@@ -1,4 +1,4 @@
--- SQLite schema. Keep in sync with PLAN/PLAN_1.md section 2.
+-- SQLite schema for AiViewNews (PLAN 14). User version is managed in db.py.
 CREATE TABLE IF NOT EXISTS users (
     id            INTEGER PRIMARY KEY AUTOINCREMENT,
     username      TEXT NOT NULL UNIQUE,
@@ -7,24 +7,39 @@ CREATE TABLE IF NOT EXISTS users (
     created_at    TEXT NOT NULL
 );
 
-CREATE TABLE IF NOT EXISTS documents (
+CREATE TABLE IF NOT EXISTS histories (
     id           INTEGER PRIMARY KEY AUTOINCREMENT,
     user_id      INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-    filename     TEXT NOT NULL,
-    stored_path  TEXT NOT NULL,
-    md_path      TEXT,
-    page_count   INTEGER,
-    char_count   INTEGER,
-    page_offsets TEXT,
-    parse_status TEXT NOT NULL DEFAULT 'pending'
-                 CHECK (parse_status IN ('pending', 'parsing', 'parsed', 'failed')),
-    parse_error  TEXT,
-    created_at   TEXT NOT NULL
+    title        TEXT NOT NULL DEFAULT '',
+    status       TEXT NOT NULL DEFAULT 'draft'
+                 CHECK (status IN ('draft', 'ready', 'failed')),
+    created_at   TEXT NOT NULL,
+    updated_at   TEXT NOT NULL,
+    published_at TEXT,
+    expires_at   TEXT
+);
+
+CREATE TABLE IF NOT EXISTS documents (
+    id            INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id       INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    history_id    INTEGER NOT NULL REFERENCES histories(id) ON DELETE CASCADE,
+    filename      TEXT NOT NULL,
+    stored_path   TEXT,
+    pdf_purged_at TEXT,
+    md_path       TEXT,
+    page_count    INTEGER,
+    char_count    INTEGER,
+    page_offsets  TEXT,
+    parse_status  TEXT NOT NULL DEFAULT 'pending'
+                  CHECK (parse_status IN ('pending', 'parsing', 'parsed', 'failed')),
+    parse_error   TEXT,
+    created_at    TEXT NOT NULL
 );
 
 CREATE TABLE IF NOT EXISTS tasks (
     id               INTEGER PRIMARY KEY AUTOINCREMENT,
     user_id          INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    history_id       INTEGER NOT NULL REFERENCES histories(id) ON DELETE CASCADE,
     query            TEXT NOT NULL,
     status           TEXT NOT NULL DEFAULT 'pending'
                      CHECK (status IN ('pending', 'analyzing', 'done', 'partial', 'failed')),
@@ -71,8 +86,12 @@ CREATE TABLE IF NOT EXISTS settings (
     updated_by INTEGER REFERENCES users(id) ON DELETE SET NULL
 );
 
+CREATE INDEX IF NOT EXISTS idx_histories_user ON histories(user_id, updated_at);
+CREATE INDEX IF NOT EXISTS idx_histories_expiry ON histories(expires_at);
 CREATE INDEX IF NOT EXISTS idx_documents_user ON documents(user_id);
+CREATE INDEX IF NOT EXISTS idx_documents_history ON documents(history_id);
 CREATE INDEX IF NOT EXISTS idx_tasks_user ON tasks(user_id);
+CREATE INDEX IF NOT EXISTS idx_tasks_history ON tasks(history_id);
 CREATE INDEX IF NOT EXISTS idx_events_task ON events(task_id);
 CREATE INDEX IF NOT EXISTS idx_events_doc ON events(doc_id);
 CREATE INDEX IF NOT EXISTS idx_task_documents_doc ON task_documents(doc_id);

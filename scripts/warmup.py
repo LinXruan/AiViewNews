@@ -137,7 +137,7 @@ def check_llm() -> str:
 
 
 def main() -> int:
-    print("PDFAiReader warmup")
+    print("AiViewNews warmup")
     checks = [
         ("config", check_config),
         ("database", check_database),

@@ -1,9 +1,11 @@
 """Document records: ownership checks and parse-status transitions."""
 from __future__ import annotations
 
+import shutil
 from datetime import datetime, timezone
 from pathlib import Path
 
+from .. import paths
 from ..db import get_conn
 
 
@@ -14,19 +16,25 @@ def _now() -> str:
 def public_document(row: dict) -> dict:
     return {
         "id": row["id"],
+        "history_id": row["history_id"],
         "filename": row["filename"],
         "page_count": row["page_count"],
         "char_count": row["char_count"],
         "parse_status": row["parse_status"],
         "parse_error": row["parse_error"],
+        "pdf_purged_at": row.get("pdf_purged_at"),
         "created_at": row["created_at"],
     }
 
 
-def list_documents(user_id: int) -> list[dict]:
-    rows = get_conn().execute(
-        "SELECT * FROM documents WHERE user_id = ? ORDER BY id DESC", (user_id,)
-    ).fetchall()
+def list_documents(user_id: int, history_id: int | None = None) -> list[dict]:
+    sql = "SELECT * FROM documents WHERE user_id = ?"
+    params: list = [user_id]
+    if history_id is not None:
+        sql += " AND history_id = ?"
+        params.append(history_id)
+    sql += " ORDER BY id DESC"
+    rows = get_conn().execute(sql, params).fetchall()
     return [public_document(dict(row)) for row in rows]
 
 
@@ -41,13 +49,18 @@ def get_document(doc_id: int, user_id: int | None = None) -> dict | None:
 
 
 def create_document(
-    user_id: int, filename: str, stored_path: str, page_count: int | None = None
+    user_id: int,
+    history_id: int,
+    filename: str,
+    stored_path: str,
+    page_count: int | None = None,
 ) -> dict:
     conn = get_conn()
     cursor = conn.execute(
-        "INSERT INTO documents (user_id, filename, stored_path, page_count, parse_status, created_at) "
-        "VALUES (?, ?, ?, ?, 'pending', ?)",
-        (user_id, filename, stored_path, page_count, _now()),
+        "INSERT INTO documents "
+        "(user_id, history_id, filename, stored_path, page_count, parse_status, created_at) "
+        "VALUES (?, ?, ?, ?, ?, 'pending', ?)",
+        (user_id, history_id, filename, stored_path, page_count, _now()),
     )
     conn.commit()
     return get_document(cursor.lastrowid) or {}
@@ -87,6 +100,26 @@ def mark_failed(doc_id: int, error: str) -> None:
             "UPDATE documents SET parse_status = 'failed', parse_error = ? WHERE id = ?",
             (error[-2000:], doc_id),
         )
+
+
+def purge_pdf(doc_id: int) -> None:
+    """PDFs are temporary: remove the file and forget its path in SQLite."""
+    doc = get_document(doc_id)
+    if doc is None:
+        return
+    stored = doc.get("stored_path")
+    if stored:
+        Path(stored).unlink(missing_ok=True)
+    conn = get_conn()
+    with conn:
+        conn.execute(
+            "UPDATE documents SET stored_path = NULL, pdf_purged_at = ? WHERE id = ?",
+            (_now(), doc_id),
+        )
+
+
+def delete_artifacts(doc_id: int) -> None:
+    shutil.rmtree(paths.PARSED_DIR / str(doc_id), ignore_errors=True)
 
 
 def pending_document_ids() -> list[int]:

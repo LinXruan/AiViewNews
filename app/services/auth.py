@@ -163,17 +163,14 @@ def seed_initial_users() -> None:
 
 
 def current_user(request: Request) -> dict:
-    """No login wall: missing or stale sessions fall back to the guest user."""
+    """Login is required; the guest identity must be chosen explicitly."""
     user_id = request.session.get("uid")
     if not isinstance(user_id, int):
-        guest = guest_user()
-        request.session["uid"] = guest["id"]
-        return guest
+        raise HTTPException(status_code=401, detail="请先登录")
     row = get_user_by_id(user_id)
     if row is None:
-        guest = guest_user()
-        request.session["uid"] = guest["id"]
-        return guest
+        request.session.clear()
+        raise HTTPException(status_code=401, detail="登录已失效，请重新登录")
     return public_user(row)
 
 

@@ -42,6 +42,16 @@ def admin_client():
 
 
 @pytest.fixture()
+def guest_client():
+    context = TestClient(app)
+    test_client = context.__enter__()
+    response = test_client.post("/api/guest")
+    assert response.status_code == 200, response.text
+    yield test_client
+    context.__exit__(None, None, None)
+
+
+@pytest.fixture()
 def demo_client():
     context = TestClient(app)
     test_client = context.__enter__()

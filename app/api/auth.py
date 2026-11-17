@@ -37,10 +37,26 @@ def login(payload: LoginPayload, request: Request) -> dict:
     return user
 
 
+@router.post("/guest")
+def guest_login(request: Request) -> dict:
+    user = auth.guest_user()
+    request.session.clear()
+    request.session["uid"] = user["id"]
+    return user
+
+
+@router.post("/register")
+def register(payload: LoginPayload, request: Request) -> dict:
+    user = auth.create_user(payload.username, payload.password, role="user")
+    request.session.clear()
+    request.session["uid"] = user["id"]
+    return user
+
+
 @router.post("/logout")
 def logout(request: Request) -> dict:
     request.session.clear()
-    return {"ok": True, "user": auth.guest_user()}
+    return {"ok": True}
 
 
 @router.get("/me")

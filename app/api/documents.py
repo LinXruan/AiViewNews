@@ -5,12 +5,12 @@ import uuid
 from pathlib import Path
 
 import pymupdf
-from fastapi import APIRouter, Depends, File, UploadFile
+from fastapi import APIRouter, Depends, File, Form, UploadFile
 from fastapi.responses import FileResponse
 
 from .. import paths, workers
 from ..errors import ApiError
-from ..services import documents
+from ..services import documents, histories
 from ..services.auth import require_user
 
 router = APIRouter(prefix="/api/documents", tags=["documents"])
@@ -50,6 +50,7 @@ def _save_upload(upload: UploadFile, destination: Path) -> None:
 @router.post("")
 async def upload_documents(
     files: list[UploadFile] = File(...),
+    history_id: int | None = Form(None),
     user: dict = Depends(require_user),
 ) -> dict:
     if len(files) > MAX_FILES:
@@ -58,6 +59,15 @@ async def upload_documents(
     paths.ensure_dirs()
     created: list[dict] = []
     saved_paths: list[Path] = []
+    draft_created = False
+    if history_id is None:
+        history_id = histories.create_draft(
+            user["id"], is_guest=user["username"] == "guest"
+        )
+        draft_created = True
+    elif histories.get_raw(history_id, user["id"]) is None:
+        raise ApiError(404, "history_not_found", "历史记录不存在")
+
     try:
         for upload in files:
             filename = _validate_filename(upload.filename or "")
@@ -71,7 +81,7 @@ async def upload_documents(
                 page_count = None
             created.append(
                 documents.create_document(
-                    user["id"], filename, str(destination), page_count
+                    user["id"], history_id, filename, str(destination), page_count
                 )
             )
         for doc in created:
@@ -80,6 +90,8 @@ async def upload_documents(
     except Exception:
         for doc in created:
             documents.delete_document(doc["id"])
+        if draft_created:
+            histories.delete_history_internal(history_id)
         for path in saved_paths:
             path.unlink(missing_ok=True)
         raise
@@ -87,12 +99,17 @@ async def upload_documents(
         for upload in files:
             await upload.close()
 
-    return {"documents": [documents.public_document(doc) for doc in created]}
+    return {
+        "history_id": history_id,
+        "documents": [documents.public_document(doc) for doc in created],
+    }
 
 
 @router.get("")
-def list_documents(user: dict = Depends(require_user)) -> dict:
-    return {"documents": documents.list_documents(user["id"])}
+def list_documents(
+    history_id: int | None = None, user: dict = Depends(require_user)
+) -> dict:
+    return {"documents": documents.list_documents(user["id"], history_id)}
 
 
 @router.get("/{doc_id}/text")

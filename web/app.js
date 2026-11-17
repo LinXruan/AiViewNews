@@ -3,21 +3,24 @@
 const App = {
   state: {
     user: null,
-    documents: [],
-    tasks: [],
-    currentTaskId: null,
-    currentTask: null,
+    histories: [],
+    activeHistory: null,
+    activeTask: null,
     events: [],
-    report: null,
-    selectedDocs: new Set(),
-    knownParsed: new Set(),
-    view: "tasks",
-    uploading: false,
-    taskToken: 0,
-    setupAdminAvailable: false,
+    documents: [],
+    activeDocId: null,
+    readerText: "",
+    readerBlocks: [],
+    selectedEventId: null,
+    queryRunning: false,
+    reportTaskId: null,
+    reportDirty: false,
+    search: "",
+    manualNew: false,
+    authMode: "login",
+    setupAvailable: false,
   },
   polling: false,
-  pollTick: 0,
 };
 
 App.api = async function (path, options) {
@@ -47,227 +50,142 @@ App.api = async function (path, options) {
         : "请求失败（" + response.status + "）";
     const failure = new Error(message);
     failure.status = response.status;
+    if (response.status === 401 && App.state.user) {
+      App.state.user = null;
+      App.showAuth();
+    }
     throw failure;
   }
   return data;
 };
 
-App.show = function () {
-  document.getElementById("topbar").hidden = false;
-  document.getElementById("app-main").hidden = false;
+App.el = function (tag, className, text) {
+  const node = document.createElement(tag);
+  if (className) {
+    node.className = className;
+  }
+  if (text !== undefined) {
+    node.textContent = text;
+  }
+  return node;
 };
 
-App.updateAccountUi = function () {
-  const user = App.state.user;
-  if (!user) {
-    return;
+App.showAuth = function () {
+  App.state.activeHistory = null;
+  App.state.activeTask = null;
+  App.state.events = [];
+  document.getElementById("auth-screen").hidden = false;
+  document.getElementById("workspace").hidden = true;
+  document.getElementById("report-screen").hidden = true;
+  const error = document.getElementById("auth-error");
+  error.hidden = true;
+  if (App.auth) {
+    App.auth.setMode("login");
   }
-  const isAdmin = user.role === "admin";
-  const isGuest = user.username === "guest";
-  document.getElementById("user-label").textContent = isAdmin
-    ? user.username + " · 管理员"
-    : isGuest
-      ? "普通用户（免登录）"
-      : user.username + " · 普通用户";
-  document.getElementById("admin-tab").hidden = !isAdmin;
-  document.getElementById("admin-login-toggle").hidden = isAdmin;
-  document.getElementById("admin-login-toggle").textContent = App.state.setupAdminAvailable
-    ? "创建管理员"
-    : "管理员登录";
-  document.getElementById("logout-btn").hidden = !isAdmin;
+  if (App.auth) {
+    App.auth.checkSetup();
+  }
+};
+
+App.showWorkspace = function () {
+  document.getElementById("auth-screen").hidden = true;
+  document.getElementById("report-screen").hidden = true;
+  document.getElementById("workspace").hidden = false;
 };
 
 App.setUser = function (user) {
   App.state.user = user;
-  App.updateAccountUi();
-  App.show();
+  const guest = user.username === "guest";
+  document.getElementById("account-name").textContent = guest ? "不登陆" : user.username;
+  document.getElementById("avatar").textContent = (guest ? "不" : user.username[0] || "A").toUpperCase();
+  document.getElementById("account-settings").hidden = guest;
 };
 
 App.formatTime = function (value) {
   if (!value) {
     return "—";
   }
-  const date = App.parseDate(value);
+  let source = value;
+  if (/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/.test(value)) {
+    source = value.replace(" ", "T") + "Z";
+  }
+  const date = new Date(source);
+  return Number.isNaN(date.getTime()) ? value : date.toLocaleString("zh-CN", { hour12: false });
+};
+
+App.shortDate = function (value) {
+  if (!value) {
+    return "";
+  }
+  let source = value;
+  if (/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/.test(value)) {
+    source = value.replace(" ", "T") + "Z";
+  }
+  const date = new Date(source);
   if (Number.isNaN(date.getTime())) {
     return value;
   }
-  return date.toLocaleString("zh-CN", { hour12: false });
-};
-
-App.parseDate = function (value) {
-  if (/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/.test(value)) {
-    return new Date(value.replace(" ", "T") + "Z");
-  }
-  return new Date(value);
-};
-
-App.duration = function (start, end) {
-  if (!start || !end) {
-    return "—";
-  }
-  const seconds = Math.max(0, Math.round((App.parseDate(end) - App.parseDate(start)) / 1000));
-  if (seconds < 60) {
-    return seconds + "s";
-  }
-  return Math.floor(seconds / 60) + "m " + (seconds % 60) + "s";
+  return date.toLocaleDateString("zh-CN", { month: "2-digit", day: "2-digit" });
 };
 
 App.statusText = {
-  pending: "待处理",
+  draft: "解析中",
+  ready: "已就绪",
+  failed: "解析失败",
+  pending: "等待中",
   parsing: "解析中",
   parsed: "已解析",
-  failed: "失败",
   analyzing: "分析中",
   done: "已完成",
   partial: "部分完成",
 };
 
 App.statusBadge = function (status) {
-  const span = document.createElement("span");
-  span.className = "status " + status;
-  span.textContent = App.statusText[status] || status;
-  return span;
+  return App.el("span", "status " + status, App.statusText[status] || status);
 };
 
-App.markReportDirty = function (dirty) {
-  if (App.state.report) {
-    App.state.report.dirty = dirty;
-  }
+App.sleep = function (ms) {
+  return new Promise((resolve) => window.setTimeout(resolve, ms));
 };
 
-App.confirmDiscardReport = function () {
-  if (App.state.report && App.state.report.dirty) {
-    return window.confirm("报告有未保存的修改，确定要离开吗？");
-  }
-  return true;
-};
-
-App.resetTaskState = function () {
-  App.state.taskToken += 1;
-  App.state.currentTaskId = null;
-  App.state.currentTask = null;
+App.startSession = async function () {
+  App.showWorkspace();
+  App.history.bind();
+  App.upload.bind();
+  App.records.bind();
+  App.reader.bind();
+  App.report.bind();
+  App.account.bind();
+  App.state.activeHistory = null;
+  App.state.activeTask = null;
   App.state.events = [];
-  App.state.report = null;
-};
-
-App.switchView = function (name) {
-  if (name === "admin" && (!App.state.user || App.state.user.role !== "admin")) {
-    return;
+  App.state.manualNew = false;
+  App.records.hide();
+  document.getElementById("record-list").hidden = true;
+  document.getElementById("timeline").textContent = "";
+  document.getElementById("timeline-hint").textContent = "";
+  document.getElementById("query-input").value = "";
+  document.getElementById("query-error").hidden = true;
+  document.getElementById("doc-tabs").textContent = "";
+  document.getElementById("reader-body").textContent = "";
+  document.getElementById("summary-panel").hidden = true;
+  await App.history.load();
+  if (!App.state.activeHistory) {
+    App.reader.showUpload();
   }
-  if (!App.confirmDiscardReport()) {
-    return;
-  }
-  App.state.view = name;
-  document.querySelectorAll(".tab").forEach((tab) => {
-    tab.classList.toggle("active", tab.dataset.view === name);
-  });
-  document.getElementById("tasks-view").hidden = name !== "tasks";
-  document.getElementById("timeline-view").hidden = name !== "timeline";
-  document.getElementById("report-view").hidden = name !== "report";
-  document.getElementById("admin-view").hidden = name !== "admin";
-  if (name === "timeline") {
-    App.timeline.render();
-  }
-  if (name === "report") {
-    App.report.render();
-  }
-  if (name === "admin") {
-    App.admin.show();
-  }
-};
-
-App.refreshDocuments = async function () {
-  const data = await App.api("/api/documents");
-  App.state.documents = data.documents || [];
-  App.upload.renderDocuments();
-  App.tasks.renderDocPicker();
-};
-
-App.refreshTasks = async function () {
-  const data = await App.api("/api/tasks");
-  App.state.tasks = data.tasks || [];
-  App.tasks.renderTasks();
-};
-
-App.selectTask = async function (taskId, view) {
-  if (!App.confirmDiscardReport()) {
-    return;
-  }
-  const token = ++App.state.taskToken;
-  App.state.currentTaskId = taskId;
-  App.state.currentTask = null;
-  App.state.events = [];
-  App.state.report = null;
-  try {
-    const task = await App.api("/api/tasks/" + taskId);
-    const events = await App.api("/api/tasks/" + taskId + "/events");
-    if (token !== App.state.taskToken) {
-      return;
-    }
-    App.state.currentTask = task;
-    App.state.events = events.events || [];
-    App.state.report = await App.report.fetch(taskId);
-    App.updateContext();
-    App.timeline.render();
-    App.report.render();
-    if (view) {
-      App.switchView(view);
-    }
-  } catch (error) {
-    App.tasks.showError(error.message);
-  }
-};
-
-App.updateContext = function () {
-  const task = App.state.currentTask;
-  const text = task ? "任务 #" + task.id + " · " + task.query : "未选择任务";
-  document.getElementById("task-context").textContent = text;
-  document.getElementById("timeline-task-label").textContent = task ? "任务 #" + task.id : "";
-};
-
-App.reloadCurrentTask = async function () {
-  if (!App.state.currentTaskId) {
-    return;
-  }
-  const task = await App.api("/api/tasks/" + App.state.currentTaskId);
-  const wasActive = App.state.currentTask && ["pending", "analyzing"].includes(App.state.currentTask.status);
-  const nowActive = ["pending", "analyzing"].includes(task.status);
-  App.state.currentTask = task;
-  App.updateContext();
-  if (wasActive && !nowActive) {
-    const events = await App.api("/api/tasks/" + task.id + "/events");
-    App.state.events = events.events || [];
-    const report = await App.report.fetch(task.id);
-    if (!App.state.report || !App.state.report.dirty) {
-      App.state.report = report;
-    }
-    App.timeline.render();
-    App.report.render();
-  }
+  App.startPolling();
 };
 
 App.poll = async function () {
-  const requests = [];
-  const parsing = App.state.documents.some((doc) =>
-    ["pending", "parsing"].includes(doc.parse_status)
-  );
-  App.pollTick += 1;
-  if (parsing || App.pollTick % 4 === 1) {
-    requests.push(App.refreshDocuments());
+  if (!App.state.activeTask || !["pending", "analyzing"].includes(App.state.activeTask.status)) {
+    return;
   }
-  const active = App.state.tasks.some((task) =>
-    ["pending", "analyzing"].includes(task.status)
-  );
-  if (App.state.view === "tasks" || active) {
-    requests.push(App.refreshTasks());
+  try {
+    await App.records.checkActive();
+  } catch (error) {
+    /* transient polling error */
   }
-  if (App.state.currentTask && ["pending", "analyzing"].includes(App.state.currentTask.status)) {
-    requests.push(App.reloadCurrentTask());
-  }
-  await Promise.allSettled(requests);
 };
-
-App.pollNow = App.poll;
 
 App.startPolling = function () {
   if (App.polling) {
@@ -275,11 +193,21 @@ App.startPolling = function () {
   }
   App.polling = true;
   window.setInterval(() => {
-    if (document.hidden || !App.state.user) {
-      return;
+    if (!document.hidden && App.state.user) {
+      App.poll();
     }
-    App.poll();
-  }, 1200);
+  }, 1500);
+};
+
+App.boot = async function () {
+  App.auth.bind();
+  try {
+    const user = await App.api("/api/me");
+    App.setUser(user);
+    await App.startSession();
+  } catch (error) {
+    App.showAuth();
+  }
 };
 
 window.App = App;

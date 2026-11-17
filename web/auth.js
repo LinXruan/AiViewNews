@@ -1,127 +1,111 @@
 "use strict";
 
-App.showSetup = function (show) {
-  document.getElementById("setup-view").hidden = !show;
-  document.getElementById("setup-error").hidden = true;
-  document.getElementById("admin-login-form").hidden = true;
-};
+App.auth = {
+  bound: false,
 
-App.refreshSetupStatus = async function () {
-  try {
-    const status = await App.api("/api/setup/status");
-    const admin = await App.api("/api/setup/admin");
-    App.state.setupAdminAvailable = Boolean(admin.available);
-    App.updateAccountUi();
-
-    const missing = [];
-    if (!status.llm_ok) {
-      missing.push("大模型");
-    }
-    if (!status.parse_ok) {
-      missing.push("解析器");
-    }
-    const banner = document.getElementById("setup-banner");
-    const text = document.getElementById("setup-banner-text");
-    const link = document.getElementById("setup-banner-link");
-    const isAdmin = App.state.user && App.state.user.role === "admin";
-    if (admin.available && !isAdmin) {
-      banner.hidden = false;
-      text.textContent = "系统还没有管理员，点击右上角「创建管理员」完成初始化。";
-      link.hidden = true;
+  bind() {
+    if (this.bound) {
       return;
     }
-    if (!missing.length) {
-      banner.hidden = true;
-      return;
+    this.bound = true;
+    document.querySelectorAll("[data-auth]").forEach((button) => {
+      button.addEventListener("click", () => this.setMode(button.dataset.auth));
+    });
+    document.getElementById("setup-link").addEventListener("click", () => this.setMode("setup"));
+    document.getElementById("guest-btn").addEventListener("click", () => this.guest());
+    document.getElementById("login-form").addEventListener("submit", (event) => {
+      event.preventDefault();
+      this.submit("/api/login", event.currentTarget);
+    });
+    document.getElementById("register-form").addEventListener("submit", (event) => {
+      event.preventDefault();
+      this.register(event.currentTarget);
+    });
+    document.getElementById("setup-form").addEventListener("submit", (event) => {
+      event.preventDefault();
+      this.setup(event.currentTarget);
+    });
+  },
+
+  setMode(mode) {
+    App.state.authMode = mode;
+    document.getElementById("login-form").hidden = mode !== "login";
+    document.getElementById("register-form").hidden = mode !== "register";
+    document.getElementById("setup-form").hidden = mode !== "setup";
+    document.querySelectorAll("[data-auth]").forEach((button) => {
+      button.classList.toggle("active", button.dataset.auth === mode);
+    });
+    document.getElementById("auth-error").hidden = true;
+  },
+
+  error(message) {
+    const node = document.getElementById("auth-error");
+    node.textContent = message;
+    node.hidden = !message;
+  },
+
+  async checkSetup() {
+    try {
+      const data = await App.api("/api/setup/admin");
+      App.state.setupAvailable = Boolean(data.available);
+      document.getElementById("setup-link").hidden = !data.available;
+    } catch (error) {
+      /* The login form will report connectivity errors. */
     }
-    banner.hidden = false;
-    text.textContent = isAdmin
-      ? missing.join("、") + "尚未配置，请完成系统设置后再上传或查询。"
-      : "系统尚未完成配置，请联系管理员。";
-    link.hidden = !isAdmin;
-    link.onclick = () => App.switchView("admin");
-  } catch (error) {
-    /* The banner is optional; API errors are surfaced elsewhere. */
-  }
-};
+  },
 
-App.reloadSessionData = async function () {
-  App.resetTaskState();
-  App.updateContext();
-  await App.refreshDocuments();
-  await App.refreshTasks();
-  await App.refreshSetupStatus();
-  App.timeline.render();
-  App.report.render();
-};
+  async finish(user) {
+    App.setUser(user);
+    await App.startSession();
+  },
 
-App.startSession = async function () {
-  App.updateContext();
-  await App.refreshDocuments();
-  await App.refreshTasks();
-  App.upload.init();
-  App.tasks.init();
-  App.timeline.init();
-  App.report.init();
-  App.admin.init();
-  await App.refreshSetupStatus();
-  App.startPolling();
-};
-
-App.bindAuth = function () {
-  if (App.authBound) {
-    return;
-  }
-  App.authBound = true;
-
-  const loginForm = document.getElementById("admin-login-form");
-  document.getElementById("admin-login-toggle").addEventListener("click", () => {
-    if (
-      App.state.setupAdminAvailable &&
-      App.state.user &&
-      App.state.user.role !== "admin"
-    ) {
-      App.showSetup(true);
-      return;
-    }
-    loginForm.hidden = !loginForm.hidden;
-    if (!loginForm.hidden) {
-      loginForm.username.focus();
-    }
-  });
-
-  loginForm.addEventListener("submit", async (event) => {
-    event.preventDefault();
-    const form = event.currentTarget;
+  async submit(path, form) {
+    this.error("");
     const button = form.querySelector("button[type=submit]");
-    const errorNode = document.getElementById("admin-login-error");
-    errorNode.hidden = true;
     button.disabled = true;
     try {
-      const user = await App.api("/api/login", {
+      const user = await App.api(path, {
         method: "POST",
         body: { username: form.username.value, password: form.password.value },
       });
       form.reset();
-      form.hidden = true;
-      App.resetTaskState();
-      App.setUser(user);
-      await App.startSession();
-      App.switchView("admin");
+      await this.finish(user);
     } catch (error) {
-      errorNode.textContent = error.message;
-      errorNode.hidden = false;
+      this.error(error.message);
     } finally {
       button.disabled = false;
     }
-  });
+  },
 
-  document.getElementById("setup-form").addEventListener("submit", async (event) => {
-    event.preventDefault();
-    const form = event.currentTarget;
+  async register(form) {
+    this.error("");
+    if (form.password.value !== form.confirm.value) {
+      this.error("两次输入的密码不一致");
+      return;
+    }
     const button = form.querySelector("button[type=submit]");
-    const errorNode = document.getElementById("setup-error");
-    errorNode.hidden = true;
+    button.disabled = true;
+    try {
+      const user = await App.api("/api/register", {
+        method: "POST",
+        body: { username: form.username.value, password: form.password.value },
+      });
+      form.reset();
+      await this.finish(user);
+    } catch (error) {
+      this.error(error.message);
+    } finally {
+      button.disabled = false;
+    }
+  },
+
+  async setup(form) {
+    this.error("");
+    if (form.password.value !== form.confirm.value) {
+      this.error("两次输入的密码不一致");
+      return;
+    }
+    const button = form.querySelector("button[type=submit]");
     button.disabled = true;
     try {
       const user = await App.api("/api/setup/admin", {
@@ -129,73 +113,25 @@ App.bindAuth = function () {
         body: {
           username: form.username.value,
           password: form.password.value,
-          password_confirm: form.password_confirm.value,
+          password_confirm: form.confirm.value,
         },
       });
       form.reset();
-      App.showSetup(false);
-      App.resetTaskState();
-      App.setUser(user);
-      await App.startSession();
-      App.switchView("admin");
+      await this.finish(user);
     } catch (error) {
-      errorNode.textContent = error.message;
-      errorNode.hidden = false;
+      this.error(error.message);
     } finally {
       button.disabled = false;
     }
-  });
+  },
 
-  document.getElementById("setup-close").addEventListener("click", () => {
-    App.showSetup(false);
-  });
-
-  document.getElementById("logout-btn").addEventListener("click", async () => {
-    if (!App.confirmDiscardReport()) {
-      return;
-    }
+  async guest() {
+    this.error("");
     try {
-      const data = await App.api("/api/logout", { method: "POST" });
-      App.setUser(data.user || (await App.api("/api/me")));
+      const user = await App.api("/api/guest", { method: "POST" });
+      await this.finish(user);
     } catch (error) {
-      /* Fall back to the guest identity on the next refresh. */
+      this.error(error.message);
     }
-    await App.reloadSessionData();
-    App.switchView("tasks");
-  });
-
-  document.querySelectorAll(".tab").forEach((tab) => {
-    tab.addEventListener("click", () => App.switchView(tab.dataset.view));
-  });
-
-  document.addEventListener("click", (event) => {
-    if (loginForm.hidden) {
-      return;
-    }
-    if (!event.target.closest(".account")) {
-      loginForm.hidden = true;
-    }
-  });
-
-  window.addEventListener("beforeunload", (event) => {
-    if (App.state.report && App.state.report.dirty) {
-      event.preventDefault();
-      event.returnValue = "";
-    }
-  });
-};
-
-App.boot = async function () {
-  App.bindAuth();
-  try {
-    const user = await App.api("/api/me");
-    App.setUser(user);
-    await App.startSession();
-  } catch (error) {
-    App.show();
-    const banner = document.getElementById("setup-banner");
-    const text = document.getElementById("setup-banner-text");
-    banner.hidden = false;
-    text.textContent = "无法连接服务：" + error.message;
-  }
+  },
 };

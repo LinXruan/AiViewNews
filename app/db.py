@@ -1,12 +1,23 @@
 """SQLite access: one connection per thread, WAL, foreign keys on."""
 from __future__ import annotations
 
+import shutil
 import sqlite3
 import threading
 
 from . import paths
 
 _local = threading.local()
+
+SCHEMA_VERSION = 1
+_LEGACY_TABLES = (
+    "events",
+    "reports",
+    "task_documents",
+    "tasks",
+    "documents",
+    "histories",
+)
 
 
 def get_conn() -> sqlite3.Connection:
@@ -28,13 +39,34 @@ def close_conn() -> None:
         _local.conn = None
 
 
+def _clear_legacy_data(conn: sqlite3.Connection) -> None:
+    """PLAN 14 starts a new model; old documents/tasks are intentionally deleted."""
+    for table in _LEGACY_TABLES:
+        conn.execute("DROP TABLE IF EXISTS " + table)
+    for path in paths.UPLOAD_DIR.glob("*"):
+        if path.is_file():
+            path.unlink(missing_ok=True)
+    for path in paths.PARSED_DIR.glob("*"):
+        if path.is_dir():
+            shutil.rmtree(path, ignore_errors=True)
+        elif path.is_file():
+            path.unlink(missing_ok=True)
+    (paths.LOG_DIR / "llm.jsonl").unlink(missing_ok=True)
+
+
 def init_db() -> None:
-    """Apply the idempotent schema. Safe on every startup."""
+    """Apply the schema, resetting legacy data once when the model changes."""
     paths.ensure_dirs()
     conn = get_conn()
     conn.execute("PRAGMA journal_mode = WAL")
     conn.execute("PRAGMA synchronous = NORMAL")
-    conn.executescript(paths.SCHEMA_PATH.read_text(encoding="utf-8"))
+    version = conn.execute("PRAGMA user_version").fetchone()[0]
+    if version < SCHEMA_VERSION:
+        _clear_legacy_data(conn)
+        conn.executescript(paths.SCHEMA_PATH.read_text(encoding="utf-8"))
+        conn.execute("PRAGMA user_version = " + str(SCHEMA_VERSION))
+    else:
+        conn.executescript(paths.SCHEMA_PATH.read_text(encoding="utf-8"))
     conn.commit()
 
 

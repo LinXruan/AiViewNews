@@ -9,7 +9,7 @@ import subprocess
 from pathlib import Path
 
 from .. import config, paths
-from . import documents
+from . import documents, histories
 
 PARSE_TIMEOUT_SECONDS = 600
 SERVER_START_TIMEOUT_SECONDS = 120
@@ -134,6 +134,17 @@ def _rewrite_images(markdown: str, doc_id: int) -> str:
     )
 
 
+def forget_source(pdf_path: str) -> None:
+    """Remove mineru's own doclib record/cache for a source file."""
+    if not pdf_path:
+        return
+    try:
+        prefix = _command_prefix()
+        _run(prefix + ["forget", pdf_path, "--no-dry-run"], 60)
+    except Exception:
+        pass
+
+
 def probe() -> dict:
     prefix = _command_prefix()
     version = _run(prefix + ["--version"], 30)
@@ -175,3 +186,7 @@ def parse_document(doc_id: int) -> None:
         )
     except Exception as exc:
         documents.mark_failed(doc_id, str(exc))
+    finally:
+        forget_source(doc.get("stored_path") or "")
+        documents.purge_pdf(doc_id)
+        histories.publish_if_ready(doc["history_id"])

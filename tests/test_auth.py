@@ -18,10 +18,7 @@ def test_health_and_login_logout(client):
     assert client.get("/api/me").status_code == 200
 
     assert client.post("/api/logout").status_code == 200
-    guest = client.get("/api/me")
-    assert guest.status_code == 200
-    assert guest.json()["username"] == "guest"
-    assert guest.json()["role"] == "user"
+    assert client.get("/api/me").status_code == 401
 
 
 def test_role_guard(admin_client, demo_client):

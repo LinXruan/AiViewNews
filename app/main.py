@@ -10,14 +10,17 @@ from fastapi.staticfiles import StaticFiles
 from starlette.middleware.sessions import SessionMiddleware
 
 from . import config, paths, workers
+from .api import account as account_api
 from .api import admin as admin_api
 from .api import auth as auth_api
 from .api import documents as documents_api
+from .api import histories as histories_api
 from .api import reports as reports_api
 from .api import setup as setup_api
 from .api import tasks as tasks_api
 from .db import init_db, reset_interrupted_statuses
 from .errors import register_exception_handlers
+from .services import cleanup, histories
 from .services.auth import seed_initial_users
 
 
@@ -27,12 +30,15 @@ async def lifespan(_: FastAPI) -> AsyncIterator[None]:
     init_db()
     seed_initial_users()
     reset_interrupted_statuses()
+    histories.publish_pending()
     workers.requeue_interrupted()
+    cleanup.start()
     yield
+    cleanup.stop()
     workers.shutdown()
 
 
-app = FastAPI(title="新闻事件智能解析系统", lifespan=lifespan)
+app = FastAPI(title="AiViewNews", lifespan=lifespan)
 app.add_middleware(
     SessionMiddleware,
     secret_key=config.session_secret(),
@@ -52,8 +58,10 @@ async def no_store_api(request, call_next):
     return response
 register_exception_handlers(app)
 app.include_router(auth_api.router)
+app.include_router(account_api.router)
 app.include_router(setup_api.router)
 app.include_router(documents_api.router)
+app.include_router(histories_api.router)
 app.include_router(tasks_api.router)
 app.include_router(reports_api.router)
 app.include_router(admin_api.router)
