@@ -184,7 +184,7 @@ App.admin = {
       const name = document.createElement("td");
       const dot = document.createElement("span");
       dot.className = "user-dot";
-      dot.style.background = user.avatar_color || "#2563eb";
+      dot.style.background = user.avatar_color || "#2a4a6b";
       name.append(dot, document.createTextNode(user.username));
       const role = document.createElement("td");
       const select = document.createElement("select");
