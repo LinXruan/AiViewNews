@@ -34,19 +34,41 @@ App.personal = {
     const input = document.getElementById("avatar-color-input");
     input.addEventListener("input", (event) => this.sync(event.target.value));
     input.addEventListener("change", (event) => this.save(event.target.value));
+    document.querySelectorAll("#theme-switch button").forEach((button) => {
+      button.addEventListener("click", () => this.applyTheme(button.dataset.themeMode));
+    });
   },
 
   open() {
     const user = App.state.user;
-    if (!user || user.username === "guest") {
+    if (!user) {
       return;
     }
+    const guest = user.username === "guest";
     this.render();
+    document.getElementById("avatar-color-toggle").hidden = guest;
     document.getElementById("avatar-palette").hidden = true;
     document.getElementById("avatar-color-toggle").classList.remove("open");
     document.getElementById("personal-status").textContent = "";
-    this.sync(user.avatar_color || "#2563eb");
+    if (!guest) {
+      this.sync(user.avatar_color || "#2a4a6b");
+    }
+    this.syncTheme();
     document.getElementById("personal-modal").hidden = false;
+  },
+
+  applyTheme(mode) {
+    AppTheme.set(mode);
+    this.syncTheme();
+  },
+
+  syncTheme() {
+    const mode = AppTheme.get();
+    document.querySelectorAll("#theme-switch button").forEach((button) => {
+      const active = button.dataset.themeMode === mode;
+      button.classList.toggle("active", active);
+      button.setAttribute("aria-pressed", active ? "true" : "false");
+    });
   },
 
   close() {
@@ -78,7 +100,7 @@ App.personal = {
   },
 
   sync(color) {
-    const value = String(color || "#2563eb").toLowerCase();
+    const value = String(color || "#2a4a6b").toLowerCase();
     document.getElementById("avatar-color-dot").style.background = value;
     document.getElementById("avatar-color-preview").style.background = value;
     document.getElementById("avatar-color-value").textContent = value;

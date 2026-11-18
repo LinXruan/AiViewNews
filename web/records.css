@@ -70,7 +70,7 @@
 
 .record-item:hover {
   border-left-color: var(--accent-line);
-  background: rgba(42, 74, 107, 0.05);
+  background: var(--wash);
 }
 
 .record-item.active {
@@ -203,7 +203,7 @@
 }
 
 .timeline-node:hover {
-  background: rgba(42, 74, 107, 0.045);
+  background: var(--wash-soft);
 }
 
 .timeline-node:hover::before {

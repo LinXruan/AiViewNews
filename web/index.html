@@ -4,15 +4,17 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>AiViewNews</title>
-  <link rel="stylesheet" href="/static/style.css?v=29" />
-  <link rel="stylesheet" href="/static/auth.css?v=29" />
-  <link rel="stylesheet" href="/static/history.css?v=29" />
-  <link rel="stylesheet" href="/static/records.css?v=29" />
-  <link rel="stylesheet" href="/static/reader.css?v=29" />
-  <link rel="stylesheet" href="/static/layout.css?v=29" />
-  <link rel="stylesheet" href="/static/report.css?v=29" />
-  <link rel="stylesheet" href="/static/admin.css?v=29" />
-  <link rel="stylesheet" href="/static/settings.css?v=29" />
+  <script src="/static/theme.js?v=30"></script>
+  <link rel="stylesheet" href="/static/style.css?v=30" />
+  <link rel="stylesheet" href="/static/auth.css?v=30" />
+  <link rel="stylesheet" href="/static/history.css?v=30" />
+  <link rel="stylesheet" href="/static/records.css?v=30" />
+  <link rel="stylesheet" href="/static/reader.css?v=30" />
+  <link rel="stylesheet" href="/static/layout.css?v=30" />
+  <link rel="stylesheet" href="/static/report.css?v=30" />
+  <link rel="stylesheet" href="/static/admin.css?v=30" />
+  <link rel="stylesheet" href="/static/settings.css?v=30" />
+  <link rel="stylesheet" href="/static/theme.css?v=30" />
 </head>
 <body>
   <section class="auth-screen" id="auth-screen" hidden>
@@ -88,7 +90,7 @@
       <div class="record-list" id="record-list" hidden></div>
       <form id="query-form" class="query-form">
         <div class="query-resize" data-resize="query" title="拖动调整高度"></div>
-        <textarea id="query-input" rows="4" placeholder="分析燃油价格对行业的影响"></textarea>
+        <textarea id="query-input" rows="4" placeholder="写下您的疑惑"></textarea>
         <button type="submit" class="run-btn" id="query-run" title="开始查询">▶</button>
       </form>
       <p class="error" id="query-error" hidden></p>
@@ -165,6 +167,17 @@
       <div class="settings-head">
         <h2>个性化</h2>
         <button type="button" class="icon-btn" id="personal-close" title="关闭">×</button>
+      </div>
+      <div class="theme-block">
+        <div class="theme-block-head">
+          <span class="theme-block-title">主题</span>
+          <span class="theme-block-hint">跟随系统时随系统切换</span>
+        </div>
+        <div class="theme-switch" id="theme-switch" role="group" aria-label="主题">
+          <button type="button" data-theme-mode="light">白天</button>
+          <button type="button" data-theme-mode="dark">黑夜</button>
+          <button type="button" data-theme-mode="system">系统</button>
+        </div>
       </div>
       <button type="button" class="personal-row" id="avatar-color-toggle">
         <span class="personal-row-label">更改头像背景色</span>
@@ -337,16 +350,16 @@
     </div>
   </div>
 
-  <script src="/static/app.js?v=29"></script>
-  <script src="/static/resize.js?v=29"></script>
-  <script src="/static/auth.js?v=29"></script>
-  <script src="/static/views/history.js?v=29"></script>
-  <script src="/static/views/upload.js?v=29"></script>
-  <script src="/static/views/records.js?v=29"></script>
-  <script src="/static/views/reader.js?v=29"></script>
-  <script src="/static/views/report.js?v=29"></script>
-  <script src="/static/views/account.js?v=29"></script>
-  <script src="/static/views/personal.js?v=29"></script>
-  <script src="/static/views/admin.js?v=29"></script>
+  <script src="/static/app.js?v=30"></script>
+  <script src="/static/resize.js?v=30"></script>
+  <script src="/static/auth.js?v=30"></script>
+  <script src="/static/views/history.js?v=30"></script>
+  <script src="/static/views/upload.js?v=30"></script>
+  <script src="/static/views/records.js?v=30"></script>
+  <script src="/static/views/reader.js?v=30"></script>
+  <script src="/static/views/report.js?v=30"></script>
+  <script src="/static/views/account.js?v=30"></script>
+  <script src="/static/views/personal.js?v=30"></script>
+  <script src="/static/views/admin.js?v=30"></script>
 </body>
 </html>

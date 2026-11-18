@@ -1,0 +1,132 @@
+/* Theme modes: light default, dark override, system resolved by theme.js (PLAN 23). */
+:root {
+  color-scheme: light;
+  --wash: rgba(42, 74, 107, 0.05);
+  --wash-soft: rgba(42, 74, 107, 0.04);
+  --wash-strong: rgba(42, 74, 107, 0.08);
+  --ring: rgba(42, 74, 107, 0.12);
+  --focus-ring: rgba(42, 74, 107, 0.42);
+  --selection: rgba(42, 74, 107, 0.16);
+  --card-mark: rgba(0, 0, 0, 0.08);
+  --dot-border: rgba(0, 0, 0, 0.14);
+}
+
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --paper: #121418;
+  --surface: #191c21;
+  --surface-soft: #1f2329;
+  --rail: #15181c;
+  --rail-2: #181b20;
+  --ink: #e8eaee;
+  --ink-2: #c2c8d0;
+  --muted: #8d959e;
+  --line: #292e35;
+  --line-strong: #3a424b;
+  --accent: #8db0d8;
+  --accent-dark: #a9c4e2;
+  --accent-soft: #222c38;
+  --accent-line: #3d5168;
+  --green: #7fbf9e;
+  --danger: #e08b80;
+  --amber: #d6b46e;
+  --marker: #5a4d24;
+  --wash: rgba(141, 176, 216, 0.08);
+  --wash-soft: rgba(141, 176, 216, 0.06);
+  --wash-strong: rgba(141, 176, 216, 0.12);
+  --ring: rgba(141, 176, 216, 0.24);
+  --focus-ring: rgba(141, 176, 216, 0.55);
+  --selection: rgba(141, 176, 216, 0.26);
+  --card-mark: rgba(255, 255, 255, 0.1);
+  --dot-border: rgba(255, 255, 255, 0.16);
+  --shadow: 0 16px 40px rgba(0, 0, 0, 0.5), 0 2px 10px rgba(0, 0, 0, 0.35);
+  --shadow-soft: 0 1px 2px rgba(0, 0, 0, 0.3);
+}
+
+:root[data-theme="dark"] .primary-btn {
+  background: #3e5f86;
+  color: #f4f7fb;
+}
+
+:root[data-theme="dark"] .primary-btn:hover:not(:disabled) {
+  background: #4b6f99;
+}
+
+:root[data-theme="dark"] .run-btn {
+  background: #3e5f86;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.4);
+}
+
+:root[data-theme="dark"] .run-btn:hover {
+  background: #4b6f99;
+}
+
+:root[data-theme="dark"] .run-btn.running {
+  background: #d9dde2;
+  color: #171a1f;
+}
+
+:root[data-theme="dark"] .danger-btn {
+  border-color: #5a3a36;
+  background: #2a1e1d;
+  color: var(--danger);
+}
+
+:root[data-theme="dark"] .danger-btn:hover {
+  border-color: #6f4742;
+  background: #332322;
+}
+
+:root[data-theme="dark"] .avatar.guest {
+  background: var(--surface-soft);
+  border-color: var(--line-strong);
+}
+
+:root[data-theme="dark"] .auth-screen {
+  background:
+    repeating-linear-gradient(180deg, rgba(255, 255, 255, 0.022) 0 1px, transparent 1px 34px),
+    radial-gradient(1200px 480px at 50% -12%, rgba(141, 176, 216, 0.1), transparent 70%),
+    var(--paper);
+}
+
+:root[data-theme="dark"] .modal {
+  background: rgba(0, 0, 0, 0.55);
+}
+
+:root[data-theme="dark"] .status.done,
+:root[data-theme="dark"] .status.ready,
+:root[data-theme="dark"] .status.parsed {
+  border-color: #2f4a3e;
+  background: #1b2a23;
+  color: var(--green);
+}
+
+:root[data-theme="dark"] .status.partial {
+  border-color: #4a3f26;
+  background: #2a2418;
+  color: var(--amber);
+}
+
+:root[data-theme="dark"] .status.failed {
+  border-color: #5a3a36;
+  background: #2a1e1d;
+  color: var(--danger);
+}
+
+:root[data-theme="dark"] .theme-switch button.active {
+  background: var(--accent-soft);
+  color: var(--accent-dark);
+  box-shadow: none;
+}
+
+:root[data-theme="dark"] * {
+  scrollbar-color: #3b434c transparent;
+}
+
+:root[data-theme="dark"] ::-webkit-scrollbar-thumb {
+  background-color: #3b434c;
+}
+
+:root[data-theme="dark"] ::-webkit-scrollbar-thumb:hover {
+  background-color: #4a535d;
+}

@@ -98,7 +98,7 @@
 #report-editor:focus {
   border-color: var(--accent);
   background: var(--surface);
-  box-shadow: 0 0 0 3px rgba(42, 74, 107, 0.12);
+  box-shadow: 0 0 0 3px var(--ring);
 }
 
 .report-preview {

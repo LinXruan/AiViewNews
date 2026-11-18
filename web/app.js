@@ -107,7 +107,7 @@ App.setUser = function (user) {
   avatar.classList.toggle("guest", guest);
   avatar.style.background = guest ? "" : (user.avatar_color || "");
   document.getElementById("settings-console").hidden = user.role !== "admin";
-  document.getElementById("settings-personal").hidden = guest;
+  document.getElementById("settings-personal").hidden = false;
   document.getElementById("account-settings").hidden = false;
 };
 
