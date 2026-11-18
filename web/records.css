@@ -1,3 +1,4 @@
+/* Record rail, query box and timeline (PLAN 20). */
 .record-rail {
   position: relative;
   flex: 0 0 var(--records-w, 340px);
@@ -5,7 +6,7 @@
   display: flex;
   flex-direction: column;
   min-height: 0;
-  padding: 14px 12px;
+  padding: 16px 12px 12px;
   border-right: 1px solid var(--line);
   background: var(--rail-2);
   transition: width 0.18s, flex-basis 0.18s;
@@ -48,29 +49,33 @@
 
 .record-list {
   max-height: 30vh;
-  margin: 10px 0;
+  margin: 12px 0;
   padding: 5px;
   border: 1px solid var(--line);
-  border-radius: 9px;
-  background: #fff;
+  border-radius: var(--radius);
+  background: var(--surface);
   overflow-y: auto;
 }
 
 .record-item {
   width: 100%;
-  padding: 8px;
+  padding: 8px 8px 7px 10px;
   border: 0;
-  border-radius: 7px;
+  border-left: 2px solid transparent;
+  border-radius: 0 var(--radius-xs) var(--radius-xs) 0;
   background: transparent;
   text-align: left;
+  transition: background var(--ease), border-color var(--ease);
 }
 
 .record-item:hover {
-  background: #f2f4f8;
+  border-left-color: var(--accent-line);
+  background: rgba(42, 74, 107, 0.05);
 }
 
 .record-item.active {
-  background: #e8effc;
+  border-left-color: var(--accent);
+  background: var(--accent-soft);
 }
 
 .record-item .record-query {
@@ -78,68 +83,86 @@
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  font-size: 13px;
+  font-size: 12.5px;
+  font-weight: 500;
 }
 
 .record-item .record-meta {
   display: flex;
   justify-content: space-between;
   gap: 8px;
-  margin-top: 2px;
+  margin-top: 3px;
   color: var(--muted);
-  font-size: 11.5px;
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
 }
 
 .query-form {
   position: relative;
-  margin-top: 10px;
+  margin-top: 12px;
 }
 
 .query-resize {
+  position: relative;
   height: 10px;
-  margin-bottom: 4px;
+  margin-bottom: 6px;
   border-radius: 5px;
-  background: linear-gradient(rgba(37, 99, 235, 0.1), rgba(37, 99, 235, 0));
+  background: transparent;
   cursor: row-resize;
 }
 
-.query-resize:hover,
-.is-resizing .query-resize {
-  background: rgba(37, 99, 235, 0.16);
+.query-resize::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 34px;
+  height: 3px;
+  margin: -1.5px 0 0 -17px;
+  border-radius: 2px;
+  background: var(--line-strong);
+  transition: background var(--ease);
+}
+
+.query-resize:hover::after,
+.is-resizing .query-resize::after {
+  background: var(--accent-line);
 }
 
 .query-form textarea {
   width: 100%;
   height: var(--query-h, 96px);
   min-height: 96px;
-  padding: 11px 42px 11px 12px;
+  padding: 12px 46px 12px 13px;
   border: 1px solid var(--line);
-  border-radius: 11px;
-  background: #fff;
-  outline: none;
+  border-radius: var(--radius);
+  background: var(--surface);
+  font-size: 13.5px;
+  line-height: 1.65;
   resize: none;
-}
-
-.query-form textarea:focus {
-  border-color: var(--accent);
-  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
 }
 
 .run-btn {
   position: absolute;
-  right: 8px;
-  bottom: 8px;
+  right: 9px;
+  bottom: 9px;
   display: grid;
   place-items: center;
   width: 30px;
   height: 30px;
   padding: 0 0 0 2px;
-  border: 0;
-  border-radius: 7px;
+  border-radius: 50%;
   background: var(--accent);
   color: #fff;
   font-size: 12px;
   line-height: 1;
+  box-shadow: 0 2px 6px rgba(42, 74, 107, 0.28);
+  transition: background var(--ease), box-shadow var(--ease);
+}
+
+.run-btn:hover {
+  background: var(--accent-dark);
+  box-shadow: 0 3px 10px rgba(42, 74, 107, 0.34);
 }
 
 .run-btn.running {
@@ -149,61 +172,79 @@
 .timeline {
   flex: 1;
   min-height: 0;
-  margin-top: 12px;
+  margin-top: 14px;
+  padding: 0 4px 0 2px;
   overflow-y: auto;
-  padding-right: 2px;
 }
 
 .timeline-node {
   position: relative;
   display: block;
   width: 100%;
-  padding: 7px 8px 14px 20px;
+  padding: 8px 8px 16px 18px;
   border: 0;
-  border-left: 2px solid var(--line);
+  border-left: 1px solid var(--line-strong);
   background: transparent;
   text-align: left;
+  transition: background var(--ease), border-color var(--ease);
 }
 
 .timeline-node::before {
   content: "";
   position: absolute;
-  top: 12px;
-  left: -6px;
-  width: 10px;
-  height: 10px;
-  border-radius: 50%;
-  background: var(--accent);
-  border: 2px solid #fff;
+  top: 13px;
+  left: -4.5px;
+  width: 8px;
+  height: 8px;
+  border: 1.5px solid var(--accent);
+  border-radius: 1px;
+  background: var(--rail-2);
+  transition: background var(--ease);
+}
+
+.timeline-node:hover {
+  background: rgba(42, 74, 107, 0.045);
+}
+
+.timeline-node:hover::before {
+  background: var(--accent-soft);
+}
+
+.timeline-node.active {
+  border-left-color: var(--accent);
+  background: var(--accent-soft);
 }
 
 .timeline-node.active::before {
-  background: var(--green);
+  background: var(--accent);
 }
 
 .timeline-node .node-date {
   display: block;
   color: var(--accent-dark);
-  font-size: 12px;
-  font-weight: 700;
+  font-size: 11.5px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.01em;
 }
 
 .timeline-node .node-text {
   display: block;
-  margin-top: 1px;
-  color: #374151;
-  font-size: 13px;
-  line-height: 1.5;
+  margin-top: 3px;
+  color: var(--ink-2);
+  font-size: 12.5px;
+  line-height: 1.55;
 }
 
 .timeline-summary {
   max-height: 110px;
   margin: 10px 0 4px;
-  padding: 8px 10px;
-  border-radius: 8px;
-  background: #f2f5fb;
-  color: #4b5563;
-  font-size: 12.5px;
-  line-height: 1.6;
+  padding: 9px 11px;
+  border-left: 3px solid var(--accent-line);
+  border-radius: 0 var(--radius-xs) var(--radius-xs) 0;
+  background: var(--surface);
+  color: var(--ink-2);
+  font-size: 12px;
+  line-height: 1.65;
   overflow-y: auto;
 }

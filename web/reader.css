@@ -12,40 +12,64 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 14px;
+  gap: 16px;
   padding: 32px;
 }
 
 .upload-card {
-  width: min(440px, 100%);
+  width: min(460px, 100%);
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 6px;
-  padding: 42px 24px;
-  border: 1.5px dashed #c4cbd8;
-  border-radius: 16px;
-  background: #fbfcfe;
+  gap: 8px;
+  padding: 48px 28px;
+  border: 1px dashed var(--line-strong);
+  border-radius: var(--radius-lg);
+  background: var(--surface);
   text-align: center;
   cursor: pointer;
-  transition: border-color 0.15s, background 0.15s;
+  transition: border-color var(--ease), background var(--ease), box-shadow var(--ease);
 }
 
 .upload-card:hover {
-  border-color: var(--accent);
-  background: #f4f8ff;
+  border-color: var(--accent-line);
+  background: var(--accent-soft);
+  box-shadow: var(--shadow-soft);
 }
 
 .upload-plus {
   display: grid;
   place-items: center;
-  width: 42px;
-  height: 42px;
-  margin-bottom: 4px;
+  width: 44px;
+  height: 44px;
+  margin-bottom: 6px;
+  border: 1px solid var(--accent-line);
   border-radius: 50%;
-  background: #e8effc;
+  background: var(--surface);
   color: var(--accent);
-  font-size: 24px;
+  font-size: 22px;
+  transition: border-color var(--ease), color var(--ease);
+}
+
+.upload-card:hover .upload-plus {
+  border-color: var(--accent);
+  color: var(--accent-dark);
+}
+
+.upload-card strong {
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.upload-card .muted {
+  max-width: 300px;
+  font-size: 12.5px;
+  line-height: 1.6;
+}
+
+#upload-status {
+  margin: 0;
+  font-size: 12px;
 }
 
 .reader-pane {

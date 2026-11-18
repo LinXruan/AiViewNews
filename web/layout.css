@@ -1,8 +1,9 @@
+/* Resize handles, collapsed rails and responsive rules (PLAN 20). */
 .rail-resize {
   position: absolute;
   top: 0;
-  right: -3px;
-  width: 10px;
+  right: -4px;
+  width: 11px;
   height: 100%;
   cursor: col-resize;
   z-index: 6;
@@ -13,15 +14,16 @@
   position: absolute;
   top: 0;
   bottom: 0;
-  left: 2px;
+  left: 4px;
   width: 2px;
+  border-radius: 2px;
   background: transparent;
   transition: background 0.12s ease;
 }
 
 .rail-resize:hover::after,
 .is-resizing .rail-resize::after {
-  background: rgba(37, 99, 235, 0.35);
+  background: var(--accent-line);
 }
 
 body.is-resizing {
