@@ -161,6 +161,7 @@ App.startSession = async function () {
   App.upload.bind();
   App.records.bind();
   App.reader.bind();
+  App.resizer.bind();
   App.report.bind();
   App.account.bind();
   App.admin.bind();

@@ -87,7 +87,6 @@ def save_report(
 def render_markdown(payload: RenderPayload, user: dict = Depends(require_user)) -> dict:
     return {"html": markdown_renderer.render(payload.markdown)}
 
-
 @router.get("/tasks/{task_id}/report.docx")
 def download_report(task_id: int, user: dict = Depends(require_user)) -> Response:
     task = _owned_task(task_id, user["id"])

@@ -123,9 +123,9 @@ def get_text(
     if doc is None:
         raise ApiError(404, "document_not_found", "文档不存在")
     try:
-        text = documents.read_markdown(doc)
+        text = documents.read_markdown(doc["id"])
     except OSError:
-        raise ApiError(409, "document_not_parsed", "文档尚未解析完成")
+        raise ApiError(409, "document_not_parsed", "正文文件缺失，请重新上传该 PDF")
     offset = max(0, min(offset, len(text)))
     limit = max(1, min(limit, 50000))
     return {

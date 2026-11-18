@@ -73,7 +73,7 @@ def _collect_events(
     failed_chunks = 0
     for doc in docs:
         try:
-            text = documents.read_markdown(doc)
+            text = documents.read_markdown(doc["id"])
         except OSError:
             failed_chunks += 1
             continue

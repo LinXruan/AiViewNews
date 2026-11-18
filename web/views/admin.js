@@ -15,6 +15,9 @@ App.admin = {
     });
     document.getElementById("settings-test-llm").addEventListener("click", () => this.testLlm());
     document.getElementById("settings-detect").addEventListener("click", () => this.detect());
+    document.getElementById("settings-detect-pandoc").addEventListener("click", () =>
+      this.detectPandoc()
+    );
     document.getElementById("create-user-form").addEventListener("submit", (event) => {
       event.preventDefault();
       this.createUser(event.currentTarget);
@@ -65,6 +68,7 @@ App.admin = {
     document.getElementById("set-timeout").value = data.llm.timeout || "60";
     document.getElementById("set-mineru-cmd").value = data.parse.mineru_cmd || "";
     document.getElementById("set-tier").value = data.parse.tier || "flash";
+    document.getElementById("set-pandoc").value = (data.export && data.export.pandoc) || "";
   },
 
   async loadSettings() {
@@ -84,6 +88,9 @@ App.admin = {
       parse: {
         mineru_cmd: document.getElementById("set-mineru-cmd").value.trim(),
         tier: document.getElementById("set-tier").value,
+      },
+      export: {
+        pandoc: document.getElementById("set-pandoc").value.trim(),
       },
     };
   },
@@ -109,6 +116,33 @@ App.admin = {
       this.status("连接成功 · 模型 " + data.model + " · " + data.latency_ms + "ms");
     } catch (error) {
       this.status("连接失败：" + error.message, true);
+    }
+  },
+
+  async detectPandoc() {
+    this.status("正在探测 pandoc……");
+    const box = document.getElementById("pandoc-candidates");
+    box.textContent = "";
+    try {
+      const data = await App.api("/api/admin/settings/detect-pandoc");
+      const candidates = data.candidates || [];
+      if (!candidates.length) {
+        this.status("没有找到 pandoc，请手动填写完整路径。", true);
+        return;
+      }
+      candidates.forEach((path) => {
+        const button = document.createElement("button");
+        button.type = "button";
+        button.textContent = path;
+        button.addEventListener("click", () => {
+          document.getElementById("set-pandoc").value = path;
+          this.status("已填入候选路径，保存后生效。");
+        });
+        box.append(button);
+      });
+      this.status("找到 " + candidates.length + " 个候选路径，点击填入。");
+    } catch (error) {
+      this.status("探测失败：" + error.message, true);
     }
   },
 

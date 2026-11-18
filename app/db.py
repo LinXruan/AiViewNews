@@ -72,6 +72,13 @@ def _add_avatar_color(conn: sqlite3.Connection) -> None:
         )
 
 
+def _drop_md_path(conn: sqlite3.Connection) -> None:
+    """PLAN 17: parsed text is derived from the document id, not stored paths."""
+    columns = {row["name"] for row in conn.execute("PRAGMA table_info(documents)")}
+    if "md_path" in columns:
+        conn.execute("ALTER TABLE documents DROP COLUMN md_path")
+
+
 def init_db() -> None:
     """Apply the schema, resetting legacy data once when the model changes."""
     paths.ensure_dirs()
@@ -83,10 +90,12 @@ def init_db() -> None:
         _clear_legacy_data(conn)
         conn.executescript(paths.SCHEMA_PATH.read_text(encoding="utf-8"))
         _add_avatar_color(conn)
+        _drop_md_path(conn)
         conn.execute("PRAGMA user_version = " + str(SCHEMA_VERSION))
     else:
         conn.executescript(paths.SCHEMA_PATH.read_text(encoding="utf-8"))
         _add_avatar_color(conn)
+        _drop_md_path(conn)
     conn.commit()
 
 

@@ -4,13 +4,13 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>AiViewNews</title>
-  <link rel="stylesheet" href="/static/style.css?v=19" />
-  <link rel="stylesheet" href="/static/history.css?v=19" />
-  <link rel="stylesheet" href="/static/records.css?v=19" />
-  <link rel="stylesheet" href="/static/reader.css?v=19" />
-  <link rel="stylesheet" href="/static/layout.css?v=19" />
-  <link rel="stylesheet" href="/static/report.css?v=19" />
-  <link rel="stylesheet" href="/static/admin.css?v=19" />
+  <link rel="stylesheet" href="/static/style.css?v=24" />
+  <link rel="stylesheet" href="/static/history.css?v=24" />
+  <link rel="stylesheet" href="/static/records.css?v=24" />
+  <link rel="stylesheet" href="/static/reader.css?v=24" />
+  <link rel="stylesheet" href="/static/layout.css?v=24" />
+  <link rel="stylesheet" href="/static/report.css?v=24" />
+  <link rel="stylesheet" href="/static/admin.css?v=24" />
 </head>
 <body>
   <section class="auth-screen" id="auth-screen" hidden>
@@ -49,6 +49,7 @@
 
   <div class="workspace" id="workspace" hidden>
     <aside class="history-rail" id="history-rail">
+      <div class="rail-resize" data-resize="history" title="拖动调整宽度"></div>
       <div class="rail-head">
         <span class="wordmark" id="rail-wordmark">AiViewNews</span>
         <div class="rail-actions">
@@ -70,6 +71,7 @@
     </aside>
 
     <aside class="record-rail" id="record-rail" hidden>
+      <div class="rail-resize" data-resize="records" title="拖动调整宽度"></div>
       <div class="rail-head rail-head-end">
         <div class="rail-actions">
           <button type="button" class="icon-btn" id="records-toggle" title="记录">
@@ -83,6 +85,7 @@
       </div>
       <div class="record-list" id="record-list" hidden></div>
       <form id="query-form" class="query-form">
+        <div class="query-resize" data-resize="query" title="拖动调整高度"></div>
         <textarea id="query-input" rows="4" placeholder="分析燃油价格对行业的影响"></textarea>
         <button type="submit" class="run-btn" id="query-run" title="开始查询">▶</button>
       </form>
@@ -105,11 +108,11 @@
       <div class="reader-pane" id="reader-pane" hidden>
         <div class="reader-head">
           <div class="doc-tabs" id="doc-tabs"></div>
-          <button type="button" class="primary-btn" id="save-btn" disabled>保存</button>
+          <button type="button" class="primary-btn" id="save-btn" disabled>报告</button>
         </div>
         <div class="reader-body" id="reader-body"></div>
         <section class="summary-panel" id="summary-panel" hidden>
-          <div class="summary-resize" id="summary-resize" title="拖动调整高度"></div>
+          <div class="summary-resize" id="summary-resize" data-resize="summary" title="拖动调整高度"></div>
           <div class="summary-head">
             <span id="summary-title"></span>
             <button type="button" class="icon-btn" id="summary-close">×</button>
@@ -166,6 +169,10 @@
             <span>mineru 可执行文件路径</span>
             <input id="set-mineru-cmd" placeholder="例如 D:/.../envs/mineru/Scripts/mineru.exe" />
           </label>
+          <label class="field wide">
+            <span>Pandoc 可执行文件路径（导出 DOCX）</span>
+            <input id="set-pandoc" placeholder="例如 C:/Program Files/Pandoc/pandoc.exe" />
+          </label>
           <label class="field">
             <span>解析档位</span>
             <select id="set-tier">
@@ -179,9 +186,11 @@
             <button type="submit" class="primary-btn">保存设置</button>
             <button type="button" class="ghost-btn" id="settings-test-llm">测试大模型</button>
             <button type="button" class="ghost-btn" id="settings-detect">自动探测 mineru</button>
+            <button type="button" class="ghost-btn" id="settings-detect-pandoc">自动探测 pandoc</button>
           </div>
           <p class="settings-status" id="settings-status"></p>
           <div class="candidate-list" id="mineru-candidates"></div>
+          <div class="candidate-list" id="pandoc-candidates"></div>
         </form>
       </section>
 
@@ -252,6 +261,7 @@
     <p class="muted" id="report-status"></p>
     <div class="report-grid">
       <textarea id="report-editor" spellcheck="false" placeholder="报告内容将在这里显示，可直接编辑 Markdown。"></textarea>
+      <div class="report-split" data-resize="report" title="拖动调整分栏"></div>
       <article class="report-preview" id="report-preview"></article>
     </div>
   </section>
@@ -273,14 +283,15 @@
     </div>
   </div>
 
-  <script src="/static/app.js?v=19"></script>
-  <script src="/static/auth.js?v=19"></script>
-  <script src="/static/views/history.js?v=19"></script>
-  <script src="/static/views/upload.js?v=19"></script>
-  <script src="/static/views/records.js?v=19"></script>
-  <script src="/static/views/reader.js?v=19"></script>
-  <script src="/static/views/report.js?v=19"></script>
-  <script src="/static/views/account.js?v=19"></script>
-  <script src="/static/views/admin.js?v=19"></script>
+  <script src="/static/app.js?v=24"></script>
+  <script src="/static/resize.js?v=24"></script>
+  <script src="/static/auth.js?v=24"></script>
+  <script src="/static/views/history.js?v=24"></script>
+  <script src="/static/views/upload.js?v=24"></script>
+  <script src="/static/views/records.js?v=24"></script>
+  <script src="/static/views/reader.js?v=24"></script>
+  <script src="/static/views/report.js?v=24"></script>
+  <script src="/static/views/account.js?v=24"></script>
+  <script src="/static/views/admin.js?v=24"></script>
 </body>
 </html>

@@ -1,6 +1,7 @@
 .record-rail {
-  flex: 0 0 340px;
-  width: 340px;
+  position: relative;
+  flex: 0 0 var(--records-w, 340px);
+  width: var(--records-w, 340px);
   display: flex;
   flex-direction: column;
   min-height: 0;
@@ -94,15 +95,29 @@
   margin-top: 10px;
 }
 
+.query-resize {
+  height: 10px;
+  margin-bottom: 4px;
+  border-radius: 5px;
+  background: linear-gradient(rgba(37, 99, 235, 0.1), rgba(37, 99, 235, 0));
+  cursor: row-resize;
+}
+
+.query-resize:hover,
+.is-resizing .query-resize {
+  background: rgba(37, 99, 235, 0.16);
+}
+
 .query-form textarea {
   width: 100%;
+  height: var(--query-h, 96px);
   min-height: 96px;
   padding: 11px 42px 11px 12px;
   border: 1px solid var(--line);
   border-radius: 11px;
   background: #fff;
   outline: none;
-  resize: vertical;
+  resize: none;
 }
 
 .query-form textarea:focus {
@@ -114,13 +129,17 @@
   position: absolute;
   right: 8px;
   bottom: 8px;
+  display: grid;
+  place-items: center;
   width: 30px;
   height: 30px;
+  padding: 0 0 0 2px;
   border: 0;
   border-radius: 7px;
   background: var(--accent);
   color: #fff;
   font-size: 12px;
+  line-height: 1;
 }
 
 .run-btn.running {

@@ -42,9 +42,14 @@ class ParsePayload(BaseModel):
     tier: str = Field(default="flash")
 
 
+class ExportPayload(BaseModel):
+    pandoc: str = Field(default="", max_length=500)
+
+
 class SettingsPayload(BaseModel):
     llm: LlmPayload
     parse: ParsePayload
+    export: ExportPayload = Field(default_factory=ExportPayload)
 
 
 def _admin_count() -> int:
@@ -152,6 +157,7 @@ def put_settings(payload: SettingsPayload, admin: dict = Depends(require_admin))
         "llm.timeout": str(payload.llm.timeout),
         "parse.mineru_cmd": payload.parse.mineru_cmd.strip(),
         "parse.tier": payload.parse.tier,
+        "export.pandoc": payload.export.pandoc.strip(),
     }
     if payload.llm.api_key is not None and payload.llm.api_key.strip():
         updates["llm.api_key"] = payload.llm.api_key.strip()
@@ -185,6 +191,29 @@ def _mineru_candidates() -> list[str]:
 @router.get("/settings/detect-mineru")
 def detect_mineru(_: dict = Depends(require_admin)) -> dict:
     return {"candidates": _mineru_candidates()}
+
+
+def _pandoc_candidates() -> list[str]:
+    found: list[str] = []
+    configured = settings.value("export.pandoc").strip()
+    if configured:
+        found.append(configured)
+    which = shutil.which("pandoc")
+    if which:
+        found.append(which)
+    for candidate in (
+        Path("C:/Program Files/Pandoc/pandoc.exe"),
+        Path(sys.prefix).resolve().parent / "Library" / "bin" / "pandoc.exe",
+        Path.home() / "AppData" / "Local" / "Pandoc" / "pandoc.exe",
+    ):
+        if candidate.is_file() and str(candidate) not in found:
+            found.append(str(candidate))
+    return found
+
+
+@router.get("/settings/detect-pandoc")
+def detect_pandoc(_: dict = Depends(require_admin)) -> dict:
+    return {"candidates": _pandoc_candidates()}
 
 
 @router.post("/settings/test-llm")

@@ -82,14 +82,14 @@ def mark_parsing(doc_id: int) -> None:
 
 
 def mark_parsed(
-    doc_id: int, md_path: str, page_count: int, char_count: int, page_offsets: str
+    doc_id: int, page_count: int, char_count: int, page_offsets: str
 ) -> None:
     conn = get_conn()
     with conn:
         conn.execute(
             "UPDATE documents SET parse_status = 'parsed', parse_error = NULL, "
-            "md_path = ?, page_count = ?, char_count = ?, page_offsets = ? WHERE id = ?",
-            (md_path, page_count, char_count, page_offsets, doc_id),
+            "page_count = ?, char_count = ?, page_offsets = ? WHERE id = ?",
+            (page_count, char_count, page_offsets, doc_id),
         )
 
 
@@ -129,8 +129,17 @@ def pending_document_ids() -> list[int]:
     return [row["id"] for row in rows]
 
 
-def read_markdown(doc: dict) -> str:
-    md_path = doc.get("md_path")
-    if not md_path:
-        raise FileNotFoundError("document has no parsed markdown")
-    return Path(md_path).read_text(encoding="utf-8")
+def markdown_path(doc_id: int) -> Path:
+    """Parsed text always lives under the document id, never at a stored path."""
+    return paths.PARSED_DIR / str(doc_id) / "full.md"
+
+
+def read_markdown(doc_id: int) -> str:
+    return markdown_path(doc_id).read_text(encoding="utf-8")
+
+
+def upload_path(stored: str | None) -> Path | None:
+    """Uploaded PDFs are addressed by name so moving the project folder is safe."""
+    if not stored:
+        return None
+    return paths.UPLOAD_DIR / Path(stored).name

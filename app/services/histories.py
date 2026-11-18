@@ -61,7 +61,7 @@ def _title_for_history(history_id: int) -> str:
         if doc["parse_status"] != "parsed":
             continue
         try:
-            text = documents.read_markdown(doc)
+            text = documents.read_markdown(doc["id"])
         except OSError:
             continue
         for line in text.splitlines():
@@ -177,8 +177,9 @@ def delete_history_internal(history_id: int) -> None:
         "SELECT id, stored_path FROM documents WHERE history_id = ?", (history_id,)
     ).fetchall()
     for doc in docs:
-        if doc["stored_path"]:
-            Path(doc["stored_path"]).unlink(missing_ok=True)
+        source = documents.upload_path(doc["stored_path"])
+        if source is not None:
+            source.unlink(missing_ok=True)
         shutil.rmtree(paths.PARSED_DIR / str(doc["id"]), ignore_errors=True)
     with conn:
         conn.execute("DELETE FROM histories WHERE id = ?", (history_id,))

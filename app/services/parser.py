@@ -162,7 +162,10 @@ def parse_document(doc_id: int) -> None:
         return
     try:
         ensure_server()
-        markdown = _run_parse(Path(doc["stored_path"]))
+        source = documents.upload_path(doc.get("stored_path"))
+        if source is None:
+            raise ParserError("上传的 PDF 已被清理，请重新上传")
+        markdown = _run_parse(source)
         full_md, page_offsets = _split_pages(markdown)
         full_md = _rewrite_images(full_md, doc_id)
         if not full_md.strip():
@@ -179,7 +182,6 @@ def parse_document(doc_id: int) -> None:
             page_offsets.append([len(full_md), len(full_md)])
         documents.mark_parsed(
             doc_id,
-            str(md_path),
             page_count,
             len(full_md),
             json.dumps(page_offsets, ensure_ascii=False),

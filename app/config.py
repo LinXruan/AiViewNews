@@ -66,6 +66,10 @@ def mineru_tier() -> str:
     return _setting("parse.tier") or "flash"
 
 
+def pandoc_cmd() -> str:
+    return _setting("export.pandoc")
+
+
 def session_secret() -> str:
     """Prefer .env, otherwise generate once and keep it in DATA_DIR."""
     configured = _env("SESSION_SECRET")

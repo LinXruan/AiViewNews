@@ -15,6 +15,7 @@ DEFAULTS = {
     "llm.timeout": "60",
     "parse.mineru_cmd": "",
     "parse.tier": "flash",
+    "export.pandoc": "",
     "ui.first_run_done": "false",
 }
 
@@ -26,6 +27,7 @@ ENV_NAMES = {
     "llm.timeout": "DEEPSEEK_TIMEOUT",
     "parse.mineru_cmd": "MINERU_CMD",
     "parse.tier": "MINERU_TIER",
+    "export.pandoc": "PANDOC_CMD",
 }
 
 _TTL_SECONDS = 1.0
@@ -82,6 +84,9 @@ def public() -> dict:
         "parse": {
             "mineru_cmd": value("parse.mineru_cmd"),
             "tier": value("parse.tier"),
+        },
+        "export": {
+            "pandoc": value("export.pandoc"),
         },
         "first_run_done": value("ui.first_run_done") == "true",
     }

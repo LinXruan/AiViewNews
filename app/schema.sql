@@ -27,7 +27,6 @@ CREATE TABLE IF NOT EXISTS documents (
     filename      TEXT NOT NULL,
     stored_path   TEXT,
     pdf_purged_at TEXT,
-    md_path       TEXT,
     page_count    INTEGER,
     char_count    INTEGER,
     page_offsets  TEXT,

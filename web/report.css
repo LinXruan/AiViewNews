@@ -39,9 +39,23 @@
   flex: 1;
   min-height: 0;
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-  gap: 14px;
+  grid-template-columns: var(--editor-col, minmax(0, 1fr)) 8px minmax(0, 1fr);
+  gap: 0;
   padding: 14px 20px 20px;
+}
+
+.report-split {
+  align-self: stretch;
+  margin: 0 6px;
+  border-radius: 4px;
+  cursor: col-resize;
+  background: transparent;
+  transition: background 0.12s ease;
+}
+
+.report-split:hover,
+.is-resizing .report-split {
+  background: rgba(37, 99, 235, 0.18);
 }
 
 #report-editor {
@@ -142,6 +156,10 @@
   .report-grid {
     grid-template-columns: 1fr;
     overflow-y: auto;
+  }
+
+  .report-split {
+    display: none;
   }
 
   #report-editor {

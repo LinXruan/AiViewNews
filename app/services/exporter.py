@@ -1,18 +1,85 @@
-"""Markdown report to DOCX, with explicit East Asian fonts."""
+"""Markdown report to DOCX: Pandoc first, python-docx as the offline fallback."""
 from __future__ import annotations
 
 import re
+import shutil
+import subprocess
+import tempfile
 from io import BytesIO
+from pathlib import Path
 
 from docx import Document
 from docx.oxml.ns import qn
 from docx.shared import Pt
 
+from .. import config
+
 FONT = "微软雅黑"
+PANDOC_TIMEOUT_SECONDS = 60
 _BULLET = re.compile(r"^[-*+]\s+(.*)$")
 _ORDERED = re.compile(r"^\d+[.)]\s+(.*)$")
 _HEADING = re.compile(r"^(#{1,4})\s+(.*)$")
 _ILLEGAL = re.compile(r'[\\/:*?"<>|]')
+
+
+def safe_filename(query: str) -> str:
+    summary = _ILLEGAL.sub("", (query or "分析报告").strip())[:40] or "分析报告"
+    return summary + "_分析报告.docx"
+
+
+def _title_line(title: str) -> str:
+    return "# " + (title or "分析报告").strip()
+
+
+def _with_title(title: str, content_md: str) -> str:
+    """Pandoc needs the title in the body; skip it when the report already has it."""
+    body = content_md.strip()
+    if not body:
+        return _title_line(title) + "\n"
+    first = body.splitlines()[0].strip()
+    if first == _title_line(title):
+        return body
+    return _title_line(title) + "\n\n" + body
+
+
+def pandoc_executable() -> str | None:
+    configured = config.pandoc_cmd()
+    if configured and Path(configured).is_file():
+        return configured
+    return shutil.which("pandoc")
+
+
+def _run_pandoc(executable: str, markdown: str) -> bytes:
+    handle = tempfile.NamedTemporaryFile(suffix=".docx", delete=False)
+    handle.close()
+    target = Path(handle.name)
+    try:
+        result = subprocess.run(
+            [executable, "--from", "markdown", "--to", "docx", "--output", str(target)],
+            input=markdown.encode("utf-8"),
+            capture_output=True,
+            timeout=PANDOC_TIMEOUT_SECONDS,
+            check=False,
+        )
+        if result.returncode != 0:
+            detail = result.stderr.decode("utf-8", "ignore").strip()
+            raise RuntimeError(detail[:500] or "pandoc 转换失败")
+        data = target.read_bytes()
+        if not data:
+            raise RuntimeError("pandoc 输出为空")
+        return data
+    finally:
+        target.unlink(missing_ok=True)
+
+
+def export_docx(title: str, content_md: str) -> bytes:
+    executable = pandoc_executable()
+    if executable:
+        try:
+            return _run_pandoc(executable, _with_title(title, content_md))
+        except (OSError, RuntimeError, subprocess.SubprocessError):
+            pass
+    return _export_python_docx(title, content_md)
 
 
 def _set_font(target) -> None:
@@ -43,12 +110,7 @@ def _add_paragraph(document, text: str, style: str | None = None):
     return paragraph
 
 
-def safe_filename(query: str) -> str:
-    summary = _ILLEGAL.sub("", (query or "分析报告").strip())[:40] or "分析报告"
-    return summary + "_分析报告.docx"
-
-
-def export_docx(title: str, content_md: str) -> bytes:
+def _export_python_docx(title: str, content_md: str) -> bytes:
     document = Document()
     normal = document.styles["Normal"]
     normal.font.name = FONT

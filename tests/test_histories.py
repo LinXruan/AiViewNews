@@ -17,15 +17,26 @@ def _parsed_doc(history_id: int, text: str) -> int:
         doc_id = cursor.lastrowid
     target = paths.PARSED_DIR / str(doc_id)
     target.mkdir(parents=True, exist_ok=True)
-    md_path = target / "full.md"
-    md_path.write_text(text, encoding="utf-8")
+    (target / "full.md").write_text(text, encoding="utf-8")
     with conn:
         conn.execute(
-            "UPDATE documents SET md_path = ?, page_count = 1, char_count = ?, page_offsets = ? "
+            "UPDATE documents SET page_count = 1, char_count = ?, page_offsets = ? "
             "WHERE id = ?",
-            (str(md_path), len(text), "[[0, 10]]", doc_id),
+            (len(text), "[[0, 10]]", doc_id),
         )
     return doc_id
+
+
+def test_read_markdown_ignores_stored_paths():
+    """PLAN 17: parsed text is found by id, so folder renames cannot break it."""
+    from app.services import documents
+
+    history_id = histories.create_draft(1, is_guest=False)
+    doc_id = _parsed_doc(history_id, "正文内容")
+    assert documents.read_markdown(doc_id) == "正文内容"
+    assert documents.markdown_path(doc_id) == paths.PARSED_DIR / str(doc_id) / "full.md"
+    assert documents.upload_path("C:/old/place/a.pdf") == paths.UPLOAD_DIR / "a.pdf"
+    assert documents.upload_path(None) is None
 
 
 def test_history_publish_title_and_search():

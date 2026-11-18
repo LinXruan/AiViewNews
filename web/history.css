@@ -6,8 +6,9 @@
 }
 
 .history-rail {
-  flex: 0 0 280px;
-  width: 280px;
+  position: relative;
+  flex: 0 0 var(--history-w, 280px);
+  width: var(--history-w, 280px);
   display: flex;
   flex-direction: column;
   padding: 14px 12px;

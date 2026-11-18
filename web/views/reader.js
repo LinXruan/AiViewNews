@@ -17,26 +17,6 @@ App.reader = {
     document.getElementById("summary-close").addEventListener("click", () => {
       this.clearSelection();
     });
-    this.bindResize();
-  },
-
-  bindResize() {
-    const panel = document.getElementById("summary-panel");
-    const handle = document.getElementById("summary-resize");
-    handle.addEventListener("pointerdown", (event) => {
-      const startY = event.clientY;
-      const startHeight = panel.offsetHeight;
-      const move = (e) => {
-        const h = Math.min(window.innerHeight * 0.6, Math.max(120, startHeight - (e.clientY - startY)));
-        panel.style.height = h + "px";
-      };
-      const up = () => {
-        window.removeEventListener("pointermove", move);
-        window.removeEventListener("pointerup", up);
-      };
-      window.addEventListener("pointermove", move);
-      window.addEventListener("pointerup", up);
-    });
   },
 
   showUpload() {
@@ -277,7 +257,9 @@ App.reader = {
       return;
     }
     this.highlight(block, event.source_quote || "");
-    block.el.scrollIntoView({ behavior: "smooth", block: "center" });
+    if (!document.body.classList.contains("is-resizing")) {
+      block.el.scrollIntoView({ behavior: "smooth", block: "center" });
+    }
     App.state.selectedEventId = event.id;
     App.records.setActiveEvent(event.id);
     this.showSummary(event);

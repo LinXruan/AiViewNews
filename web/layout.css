@@ -1,3 +1,44 @@
+.rail-resize {
+  position: absolute;
+  top: 0;
+  right: -3px;
+  width: 10px;
+  height: 100%;
+  cursor: col-resize;
+  z-index: 6;
+}
+
+.rail-resize::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 2px;
+  width: 2px;
+  background: transparent;
+  transition: background 0.12s ease;
+}
+
+.rail-resize:hover::after,
+.is-resizing .rail-resize::after {
+  background: rgba(37, 99, 235, 0.35);
+}
+
+body.is-resizing {
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+body.is-resizing .history-rail,
+body.is-resizing .record-rail {
+  transition: none;
+}
+
+.history-rail.collapsed .rail-resize,
+.record-rail.collapsed .rail-resize {
+  display: none;
+}
+
 .history-rail.collapsed {
   flex-basis: 56px;
   width: 56px;

@@ -16,7 +16,7 @@ import pymupdf
 
 from app import config, paths
 from app.db import get_conn, init_db
-from app.services import llm, parser, settings
+from app.services import exporter, llm, parser, settings
 
 PASS = "PASS"
 FAIL = "FAIL"
@@ -131,6 +131,16 @@ def check_parse() -> str:
         sample.unlink(missing_ok=True)
 
 
+def check_pandoc() -> str:
+    executable = exporter.pandoc_executable()
+    if not executable:
+        raise RuntimeError("未找到 pandoc，请在系统设置中填写路径")
+    data = exporter.export_docx("Warmup 报告", "## 检查\n\n- 一\n- 二\n")
+    if not data.startswith(b"PK"):
+        raise RuntimeError("pandoc 未返回有效的 docx")
+    return executable
+
+
 def check_llm() -> str:
     result = llm.ping()
     return result["model"] + " / " + str(result["latency_ms"]) + "ms"
@@ -144,6 +154,7 @@ def main() -> int:
         ("memory", check_memory),
         ("mineru", check_mineru),
         ("parse", check_parse),
+        ("pandoc", check_pandoc),
         ("llm", check_llm),
     ]
     results = [_step(name, function) for name, function in checks]
