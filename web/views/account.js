@@ -9,12 +9,10 @@ App.account = {
     }
     this.bound = true;
     const menu = document.getElementById("account-menu");
-    const panel = document.getElementById("settings-panel");
     const avatar = document.getElementById("account-button");
 
     document.getElementById("account-button").addEventListener("click", (event) => {
       event.stopPropagation();
-      panel.hidden = true;
       menu.hidden = !menu.hidden;
       if (!menu.hidden) {
         this.place(menu, avatar);
@@ -24,48 +22,90 @@ App.account = {
     document.getElementById("account-settings").addEventListener("click", (event) => {
       event.stopPropagation();
       menu.hidden = true;
-      panel.hidden = false;
-      this.place(panel, avatar);
+      this.openSettings();
     });
+    document.getElementById("account-logout").addEventListener("click", () => this.logout());
 
+    this.bindSettings();
+
+    document.getElementById("account-modal").addEventListener("click", (event) => {
+      if (event.target === event.currentTarget) {
+        this.closeAccount();
+      }
+    });
+    document.getElementById("account-modal-close").addEventListener("click", () => this.closeAccount());
+    document.getElementById("password-form").addEventListener("submit", (event) => {
+      event.preventDefault();
+      this.changePassword(event.currentTarget);
+    });
+    document.getElementById("delete-account").addEventListener("click", () => this.deleteAccount());
+
+    document.addEventListener("click", (event) => {
+      if (!event.target.closest("#account-box") && !event.target.closest("#account-menu")) {
+        menu.hidden = true;
+      }
+    });
+    document.addEventListener("keydown", (event) => {
+      if (event.key === "Escape") {
+        this.closeTop();
+      }
+    });
+    window.addEventListener("resize", () => {
+      menu.hidden = true;
+    });
+  },
+
+  bindSettings() {
+    document.getElementById("settings-close").addEventListener("click", () => this.closeSettings());
+    document.getElementById("settings-modal").addEventListener("click", (event) => {
+      if (event.target === event.currentTarget) {
+        this.closeSettings();
+      }
+    });
+    document.getElementById("settings-console").addEventListener("click", () => {
+      this.closeSettings();
+      App.admin.open();
+    });
     document.getElementById("settings-account").addEventListener("click", () => {
-      panel.hidden = true;
+      this.closeSettings();
       if (App.state.user && App.state.user.username === "guest") {
         this.discardGuest();
       } else {
         document.getElementById("account-modal").hidden = false;
       }
     });
+    document.getElementById("settings-personal").addEventListener("click", () => {
+      this.closeSettings();
+      App.personal.open();
+    });
+  },
 
-    document.getElementById("settings-console").addEventListener("click", () => {
-      panel.hidden = true;
-      App.admin.open();
-    });
+  openSettings() {
+    document.getElementById("settings-modal").hidden = false;
+  },
 
-    document.addEventListener("click", (event) => {
-      if (
-        !event.target.closest("#account-box") &&
-        !event.target.closest("#account-menu") &&
-        !event.target.closest("#settings-panel")
-      ) {
-        menu.hidden = true;
-        panel.hidden = true;
-      }
-    });
-    window.addEventListener("resize", () => {
-      menu.hidden = true;
-      panel.hidden = true;
-    });
+  closeSettings() {
+    document.getElementById("settings-modal").hidden = true;
+  },
 
-    document.getElementById("account-modal-close").addEventListener("click", () => {
-      document.getElementById("account-modal").hidden = true;
-    });
-    document.getElementById("account-logout").addEventListener("click", () => this.logout());
-    document.getElementById("password-form").addEventListener("submit", (event) => {
-      event.preventDefault();
-      this.changePassword(event.currentTarget);
-    });
-    document.getElementById("delete-account").addEventListener("click", () => this.deleteAccount());
+  closeAccount() {
+    document.getElementById("account-modal").hidden = true;
+  },
+
+  closeTop() {
+    if (!document.getElementById("account-modal").hidden) {
+      this.closeAccount();
+      return;
+    }
+    if (!document.getElementById("personal-modal").hidden) {
+      App.personal.close();
+      return;
+    }
+    if (!document.getElementById("settings-modal").hidden) {
+      this.closeSettings();
+      return;
+    }
+    document.getElementById("account-menu").hidden = true;
   },
 
   place(node, anchor) {

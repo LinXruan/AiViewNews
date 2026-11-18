@@ -78,8 +78,10 @@ App.showAuth = function () {
   document.getElementById("workspace").hidden = true;
   document.getElementById("report-screen").hidden = true;
   document.getElementById("admin-screen").hidden = true;
-  document.getElementById("settings-panel").hidden = true;
   document.getElementById("account-menu").hidden = true;
+  document.getElementById("settings-modal").hidden = true;
+  document.getElementById("personal-modal").hidden = true;
+  document.getElementById("account-modal").hidden = true;
   const error = document.getElementById("auth-error");
   error.hidden = true;
   if (App.auth) {
@@ -105,6 +107,7 @@ App.setUser = function (user) {
   avatar.classList.toggle("guest", guest);
   avatar.style.background = guest ? "" : (user.avatar_color || "");
   document.getElementById("settings-console").hidden = user.role !== "admin";
+  document.getElementById("settings-personal").hidden = guest;
   document.getElementById("account-settings").hidden = false;
 };
 
@@ -164,6 +167,7 @@ App.startSession = async function () {
   App.resizer.bind();
   App.report.bind();
   App.account.bind();
+  App.personal.bind();
   App.admin.bind();
   App.state.activeHistory = null;
   App.state.activeTask = null;

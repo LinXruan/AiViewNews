@@ -161,8 +161,7 @@
   white-space: nowrap;
 }
 
-.account-menu,
-.settings-panel {
+.account-menu {
   position: fixed;
   z-index: 80;
   min-width: 176px;
@@ -173,7 +172,6 @@
   box-shadow: var(--shadow);
 }
 
-.settings-panel button,
 .account-menu button {
   display: block;
   width: 100%;
@@ -185,7 +183,6 @@
   text-align: left;
 }
 
-.settings-panel button:hover,
 .account-menu button:hover {
   background: #f2f4f8;
 }
