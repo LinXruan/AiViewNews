@@ -81,35 +81,4 @@ body.is-resizing .record-rail {
   }
 }
 
-@media (max-width: 760px) {
-  .workspace {
-    flex-direction: column;
-    height: auto;
-    min-height: 100vh;
-    overflow: visible;
-  }
-
-  .history-rail,
-  .record-rail {
-    flex: none;
-    width: 100%;
-    max-height: 40vh;
-    border-right: 0;
-    border-bottom: 1px solid var(--line);
-  }
-
-  .record-rail.collapsed,
-  .history-rail.collapsed {
-    flex: none;
-    width: 100%;
-  }
-
-  .reader {
-    min-height: 62vh;
-  }
-
-  .summary-panel {
-    height: 170px;
-    min-height: 120px;
-  }
-}
+/* Phone layout (<=760px) lives in mobile.css (PLAN 24). */
